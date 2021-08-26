@@ -62,7 +62,7 @@ createChatRoom.post('/', async (req, res) => {
 
     res.send(response)
   } catch (error) {
-    console.log(`error msg : ${error}`)
+    console.log(`ERRORs in createChatRoom function: ${error}`)
   }
 })
 
@@ -81,7 +81,7 @@ async function getProfileFromAmity (id) {
 
     return profileAmity.data
   } catch (error) {
-    console.log(`getAmityProfile() msg : ${error}`)
+    console.log(`ERRORs in getAmityProfile function : ${error}`)
   }
 }
 
@@ -93,6 +93,7 @@ async function registerUser (user) {
       'x-api-key': 'b0ede9583e88f9364d34de1a5a00158dd50e8ee5b934692f'
     }
   }
+  //#improve: change device to parameter getting from req body 
   const postData = {
     userId: user?.userId?.toString(),
     deviceId: 'deviceId_test',
@@ -113,12 +114,13 @@ async function registerUser (user) {
     )
     return register.data
   } catch (error) {
-    console.log(`registerUser() msg : ${error}`)
+    console.log(`ERRORs in registerUser function : ${error}`)
   }
 }
 
 // get profile from true
 // จำลองให้เหมือนของ amity
+// #improve: Fail case handle
 async function getProfileFromTrue (user) {
   const profile = {
     users: {
