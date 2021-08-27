@@ -2,6 +2,7 @@ const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
+require('dotenv').config()
 
 const updateMessageStatus = express()
 
@@ -11,8 +12,10 @@ updateMessageStatus.put('/', async (req, res) => {
 
     const searchMesseage = await getMessage(message?.id)
 
+    // #improve: can use guard case. See https://dev.to/qvault/guard-clauses-how-to-clean-up-conditionals-2fdm
     if (!searchMesseage) {
-      res.status(404).json({ error: 'Request failed with status code 404' })
+      console.log('ERRORs message not found', message?.id)
+      res.status(404).json({ error: 'Request failed "message not found" with status code 404' })
     } else {
       const updateStatus = await updateMessage({
         id: searchMesseage[0]?.messageId,
@@ -20,7 +23,8 @@ updateMessageStatus.put('/', async (req, res) => {
       })
 
       if (!updateStatus) {
-        res.status(404).json({ error: 'Request failed with status code 404' })
+        console.log('ERRORs message not update', message?.id)
+        res.status(404).json({ error: 'Request failed "message not update" with status code 404' })
       } else {
         const { messageId, data } = updateStatus
 
@@ -38,33 +42,35 @@ updateMessageStatus.put('/', async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(`error msg : ${error}`)
+    console.log(`ERRORs in updateMessage function: ${error}`)
+    console.log('Message: ', req.body?.message?.id)
+    console.log('UpdateTo: ', req.body?.updateToStatus)
     res.sendStatus(500)
   }
 })
 
 async function getMessage (id) {
   // token ของแอดมิน
-  const token = 'a6d30ac240300caecf1b1fabeead75600999a530'
+  const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
 
   try {
     const msg = await axios.get(
-      `https://api.amity.co/api/v3/messages/${id}`,
+      `${process.env.PREFIX_URL}/v3/messages/${id}`,
       configAuth
     )
     return msg.data?.messages
   } catch (error) {
-    console.log(`getMessage() msg : ${error}`)
+    console.log(`ERRORs getMessage() msg : ${error}`)
     // return error.response.data
   }
 }
 
 async function updateMessage ({ id, status }) {
   // token ของแอดมิน
-  const token = 'a6d30ac240300caecf1b1fabeead75600999a530'
+  const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
@@ -75,15 +81,18 @@ async function updateMessage ({ id, status }) {
     }
   }
 
+  console.log(updateData)
+
   try {
     const msg = await axios.put(
-      `https://api.amity.co/api/v3/messages/${id}`,
+      `${process.env.PREFIX_URL}/v3/messages/${id}`,
       updateData,
       configAuth
     )
     return msg.data?.messages[0]
   } catch (error) {
-    console.log(`updateMessage() msg : ${error}`)
+    console.log(error)
+    console.log(`ERRORs updateMessage() msg : ${error}`)
   }
 }
 
