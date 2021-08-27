@@ -12,34 +12,41 @@ updateMessageStatus.put('/', async (req, res) => {
 
     const searchMesseage = await getMessage(message?.id)
 
-    // #improve: can use guard case. See https://dev.to/qvault/guard-clauses-how-to-clean-up-conditionals-2fdm
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
-      res.status(404).json({ error: 'Request failed "message not found" with status code 404' })
+      res
+        .status(404)
+        .json({
+          error: 'Request failed "message not found" with status code 404'
+        })
+    }
+
+    const updateStatus = await updateMessage({
+      id: searchMesseage[0]?.messageId,
+      status: updateToStatus
+    })
+
+    if (!updateStatus) {
+      console.log('ERRORs message not update', message?.id)
+      res
+        .status(404)
+        .json({
+          error: 'Request failed "message not update" with status code 404'
+        })
     } else {
-      const updateStatus = await updateMessage({
-        id: searchMesseage[0]?.messageId,
-        status: updateToStatus
-      })
+      const { messageId, data } = updateStatus
 
-      if (!updateStatus) {
-        console.log('ERRORs message not update', message?.id)
-        res.status(404).json({ error: 'Request failed "message not update" with status code 404' })
-      } else {
-        const { messageId, data } = updateStatus
-
-        const response = {
-          message: {
-            id: messageId,
-            data: `[${data.text}] 55555`,
-            metadata: {
-              type: 'transfer',
-              status: data.text
-            }
+      const response = {
+        message: {
+          id: messageId,
+          data: `[${data.text}] 55555`,
+          metadata: {
+            type: 'transfer',
+            status: data.text
           }
         }
-        res.send(response)
       }
+      res.send(response)
     }
   } catch (error) {
     console.log(`ERRORs in updateMessage function: ${error}`)
@@ -50,7 +57,7 @@ updateMessageStatus.put('/', async (req, res) => {
 })
 
 async function getMessage (id) {
-  // token ของแอดมิน
+  // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
@@ -69,7 +76,7 @@ async function getMessage (id) {
 }
 
 async function updateMessage ({ id, status }) {
-  // token ของแอดมิน
+  // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
