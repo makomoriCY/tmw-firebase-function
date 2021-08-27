@@ -42,7 +42,6 @@ createChatRoom.post('/', async (req, res) => {
     })
 
     // find sender user blocked
-    //#improve: return blockListStatus even if there is no block list
     const isSenderBlockReceiver = senderBlockList?.some(
       user => user === receiverTrueProfile?.users?.userId
     )
@@ -51,7 +50,7 @@ createChatRoom.post('/', async (req, res) => {
       senderProfile: senderTrueProfile?.users,
       receiverProfile: receiverTrueProfile?.users,
       friendStatus: isFriend?.isFriend,
-      blockListStatus: isSenderBlockReceiver
+      blockListStatus: isSenderBlockReceiver || false
     }
 
     console.log({
