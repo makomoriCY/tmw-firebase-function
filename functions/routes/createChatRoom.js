@@ -2,6 +2,7 @@ const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
+require('dotenv').config()
 
 const createChatRoom = express()
 
@@ -41,6 +42,7 @@ createChatRoom.post('/', async (req, res) => {
     })
 
     // find sender user blocked
+    //#improve: return blockListStatus even if there is no block list
     const isSenderBlockReceiver = senderBlockList?.some(
       user => user === receiverTrueProfile?.users?.userId
     )
@@ -63,25 +65,27 @@ createChatRoom.post('/', async (req, res) => {
     res.send(response)
   } catch (error) {
     console.log(`ERRORs in createChatRoom function: ${error}`)
+    console.log('Sender: ', req.body?.senderProfile?.userId)
+    console.log('Receiver: ', req.body?.receiverProfile?.userId)
   }
 })
 
 // get profile from amity backend
 async function getProfileFromAmity (id) {
-  const token = 'a6d30ac240300caecf1b1fabeead75600999a530'
+  const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
 
   try {
     const profileAmity = await axios.get(
-      `https://api.amity.co/api/v3/users/${id}`,
+      `${process.env.PREFIX_URL}/v3/users/${id}`,
       configAuth
     )
 
     return profileAmity.data
   } catch (error) {
-    console.log(`ERRORs in getAmityProfile function : ${error}`)
+    console.log(`ERRORs in getAmityProfile id: ${id} : ${error}`)
   }
 }
 
@@ -90,7 +94,7 @@ async function registerUser (user) {
   //x-api-key ของ app เก็บเป็น static ไว้ที่ .env
   const configKeys = {
     headers: {
-      'x-api-key': 'b0ede9583e88f9364d34de1a5a00158dd50e8ee5b934692f'
+      'x-api-key': process.env.API_KEY
     }
   }
   //#improve: change device to parameter getting from req body 
