@@ -54,10 +54,6 @@ createChatRoom.post('/', async (req, res) => {
     }
 
     console.log({
-      // senderAmityProfile,
-      // receiverAmityProfile,
-      // senderTrueProfile,
-      // receiverTrueProfile,
       response
     })
 
@@ -96,7 +92,7 @@ async function registerUser (user) {
       'x-api-key': process.env.API_KEY
     }
   }
-  //#improve: change device to parameter getting from req body 
+  //#improve: change device to parameter getting from req body
   const postData = {
     userId: user?.userId?.toString(),
     deviceId: 'deviceId_test',
@@ -122,7 +118,6 @@ async function registerUser (user) {
 }
 
 // get profile from true
-// จำลองให้เหมือนของ amity
 // #improve: Fail case handle
 async function getProfileFromTrue (user) {
   const profile = {
