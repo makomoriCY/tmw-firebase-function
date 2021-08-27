@@ -33,11 +33,11 @@ sendNotification.post('/', async (req, res) => {
     if (!isSenderBlockReceiver) {
       !isReceiverBlockSender
         ? res.send(
-            sentNotification({ id: receiverProfile?.userId, msg: messages })
+          pushNotification({ id: receiverProfile?.userId, msg: messages })
           )
-        : res.send(sentMessage({ id: receiverProfile?.userId, msg: messages }))
+        : res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
     } else {
-      res.send(sentMessage({ id: receiverProfile?.userId, msg: messages }))
+      res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
     }
   } catch (error) {
     console.log(`ERRORs in sendNotification function: ${error}`)
@@ -47,8 +47,7 @@ sendNotification.post('/', async (req, res) => {
   }
 })
 
-//#improve: may change function name to pushNotification
-function sentNotification ({ id, msg }) {
+function pushNotification ({ id, msg }) {
   const status = {
     status: true
   }
@@ -56,8 +55,7 @@ function sentNotification ({ id, msg }) {
   return status
 }
 
-//#improve: may change function name to dropNotification
-function sentMessage ({ id, msg }) {
+function dropNotification ({ id, msg }) {
   const status = {
     status: false
   }
