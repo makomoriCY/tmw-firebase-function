@@ -40,18 +40,23 @@ sendNotification.post('/', async (req, res) => {
       res.send(sentMessage({ id: receiverProfile?.userId, msg: messages }))
     }
   } catch (error) {
-    console.log(`error msg : ${error}`)
+    console.log(`ERRORs in sendNotification function: ${error}`)
+    console.log('Message: ', req.body?.message?.id)
+    console.log('Sender: ', req.body?.senderProfile?.userId)
+    console.log('Receiver: ', req.body?.receiverProfile?.userId)
   }
 })
 
+//#improve: may change function name to pushNotification
 function sentNotification ({ id, msg }) {
   const status = {
     status: true
   }
-  console.log(`์์Notification status : ${status.status}`)
+  console.log(`Notification status : ${status.status}`)
   return status
 }
 
+//#improve: may change function name to dropNotification
 function sentMessage ({ id, msg }) {
   const status = {
     status: false
