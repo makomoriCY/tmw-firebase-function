@@ -22,18 +22,30 @@ const versionFireStore = express()
 //   }
 // })
 
-versionFireStore.get('/:id', async (req, res) => {
+// versionFireStore.get('/:id', async (req, res) => {
+//   try {
+//     const id = req.params.id
+//     const transactionId = await firestore.collection('transaction').doc(id)
+//     const data = await transactionId.get()
+//     if (!data.exists) {
+//       res.status(404).send('transaction  not found')
+//     } else {
+//       res.send(data.data())
+//     }
+//   } catch (error) {
+//     console.log(`msg : ${error} `)
+//   }
+// })
+
+versionFireStore.put('/:id', async (req, res) => {
   try {
     const id = req.params.id
+    const data = req.body
     const transactionId = await firestore.collection('transaction').doc(id)
-    const data = await transactionId.get()
-    if (!data.exists) {
-      res.status(404).send('transaction  not found')
-    } else {
-      res.send(data.data())
-    }
+    await transactionId.update(data)
+    res.send('transaction updated successfuly')
   } catch (error) {
-    console.log(`msg : ${error} `)
+    res.status(400).send(error.message)
   }
 })
 
