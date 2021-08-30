@@ -23,3 +23,8 @@ const transferMoneySuccess = require('./routes/transferMoneySuccess')
 exports.transferMoneySuccess = builderFunction.onRequest(
   transferMoneySuccess.transferMoneySuccess
 )
+
+const versionFireStore = require('./routes/versionFireStore')
+exports.versionFireStore = builderFunction.onRequest(
+  versionFireStore.versionFireStore
+)
