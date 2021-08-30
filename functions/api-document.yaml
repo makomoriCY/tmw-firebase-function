@@ -1,0 +1,380 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: Custom Backend API for TMW
+  description: This is a custom backend API for TMW project
+servers:
+  - url: 'https://0596a4bd-7902-4222-9798-26f4e30ba592.mock.pstmn.io'
+paths:
+  /createChatRoom:
+    post:
+      summary: 'create chat room'
+      tags:
+        - CreateChatRoom
+      parameters:
+        - name: Admin token
+          in: header
+          required: true
+          schema:
+            type: string
+            example: admin token
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example: Bearer {{accessToken}}
+        - name: x-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            example: x-api-key
+      requestBody:
+        description: sender and receiver profile
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChatRoom'      
+      responses:
+        '200':
+          description: friend status, block status, profile sender and receiver 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseCreateChatRoom'
+        '500':
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /getBadWords:
+    get:
+      summary: 'get bad words'
+      tags:
+        - BadWords
+      responses:
+        '200':
+          description: bad words list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadWords'
+        '500':
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /sendNotification:
+    post:
+      summary: 'send notification'
+      tags:
+        - SendNotification
+      parameters:
+        - name: Admin token
+          in: header
+          required: true
+          schema:
+            type: string
+            example: admin token
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example: Bearer {{accessToken}}
+      requestBody:
+        description: Request body for send notification
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotification'      
+      responses:
+        '200':
+          description: status notification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseSendMessageNotification'
+        '500':
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /updateMessageStatus:
+    put:
+      summary: 'update message status'
+      tags:
+        - UpdateMessageStatus
+      parameters:
+        - name: Admin token
+          in: header
+          required: true
+          schema:
+            type: string
+            example: admin token
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example: Bearer {{accessToken}}
+      requestBody:
+        description: message data and status to change
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMessageStatus'      
+      responses:
+        '200':
+          description: Response body update message status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseUpdateMessageStatus'
+        '500':
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /transferMoneySuccess:
+    post:
+      summary: 'transfer money success'
+      tags:
+        - TransferMoneySuccess
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            example: Bearer {{accessToken}}
+      requestBody:
+        description: data of transaction
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferMoneySuccess'      
+      responses:
+        '200':
+          description: Response body transfer money success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseTransferMoneySuccess'
+        '500':
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    CreateChatRoom:
+      type: object
+      required:
+        - senderProfile
+        - receiverProfile
+      properties:
+        senderProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string
+        receiverProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string
+    ResponseCreateChatRoom:
+      type: object
+      required:
+        - senderProfile
+        - receiverProfile
+      properties:
+        senderProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string
+        receiverProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string
+        friendStatus:
+          type: boolean
+        blockListStatus:
+          type: boolean
+    BadWords:  
+      type: array
+      items:
+          type: string
+      example: ['BADWORD1', 'BADWORD2', 'BADWORD3']
+    
+    SendNotification:
+      type: object
+      required:
+        - message
+        - senderProfile
+        - receiverProfile
+      properties:
+        message:
+          type: object
+          properties:
+            id: 
+              type: string
+            text: 
+              type: string
+        senderProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string
+        receiverProfile:
+          type: object
+          properties:
+            displayName: 
+              type: string
+            userId: 
+              type: string
+            metadata: 
+              type: object
+            avatarFileId: 
+              type: string  
+    ResponseSendMessageNotification:
+      type: object
+      properties:
+           status: 
+            type: boolean
+            default: true
+            
+    UpdateMessageStatus:
+      type: object
+      required:
+        - message
+        - updateToStatus
+      properties:
+        message:
+          type: object
+          properties:
+            id: 
+              type: string
+            data: 
+              type: string
+            metadata: 
+              type: object
+              properties:
+                type: 
+                  type: string
+                status: 
+                  type: string
+        updateToStatus:
+          type: string
+          
+    ResponseUpdateMessageStatus:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: object
+          properties:
+            id: 
+              type: string
+            data: 
+              type: string
+            metadata: 
+              type: object
+              properties:
+                type: 
+                  type: string
+                status: 
+                  type: string
+                  
+    TransferMoneySuccess:
+      type: object
+      required:
+        - message
+      properties:
+        transferId: 
+          type: string
+        messageId: 
+          type: string
+        amt: 
+           type: string
+        currency: 
+          type: string
+        timestamp: 
+           type: string
+        sender: 
+           type: string
+        receiver: 
+          type: string
+          
+    ResponseTransferMoneySuccess:  
+      type: string
+      items:
+          type: string
+      example: 'transfer success'
+              
+    Error:
+      type: object
+      properties:
+           status: 
+            type: string
+            default: error
+           code: 
+            type: integer
+            default: 500
+           message: 
+            type: string
+            default: Unexpected error
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+security:
+  - BasicAuth: []
