@@ -52,7 +52,7 @@ createChatRoom.post('/', async (req, res) => {
       friendStatus: isFriend?.isFriend,
       blockListStatus: isSenderBlockReceiver || false
     }
-
+ 
     console.log({
       response
     })
