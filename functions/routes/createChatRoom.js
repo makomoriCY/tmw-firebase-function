@@ -89,7 +89,7 @@ async function registerUser (user) {
   //x-api-key ของ app เก็บเป็น static ไว้ที่ .env
   const configKeys = {
     headers: {
-      'x-api-key': process.env.API_KEY
+      'x-api-key': process.env.X_API_KEY
     }
   }
   //#improve: change device to parameter getting from req body
