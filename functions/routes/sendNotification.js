@@ -33,11 +33,11 @@ sendNotification.post('/', async (req, res) => {
     if (!isSenderBlockReceiver) {
       !isReceiverBlockSender
         ? res.send(
-            sentNotification({ id: receiverProfile?.userId, msg: messages })
+          pushNotification({ id: receiverProfile?.userId, msg: messages })
           )
-        : res.send(sentMessage({ id: receiverProfile?.userId, msg: messages }))
+        : res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
     } else {
-      res.send(sentMessage({ id: receiverProfile?.userId, msg: messages }))
+      res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
     }
   } catch (error) {
     console.log(`ERRORs in sendNotification function: ${error}`)
@@ -47,8 +47,7 @@ sendNotification.post('/', async (req, res) => {
   }
 })
 
-//#improve: may change function name to pushNotification
-function sentNotification ({ id, msg }) {
+function pushNotification ({ id, msg }) {
   const status = {
     status: true
   }
@@ -56,8 +55,7 @@ function sentNotification ({ id, msg }) {
   return status
 }
 
-//#improve: may change function name to dropNotification
-function sentMessage ({ id, msg }) {
+function dropNotification ({ id, msg }) {
   const status = {
     status: false
   }
@@ -77,49 +75,3 @@ function getProfileFromAmity (profile) {
 }
 
 exports.sendNotification = builderFunction.onRequest(sendNotification)
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Noti:
- *       type: object
- *       required:
- *         - test
- *         - isFriend
- *       properties:
- *           profile:
- *             type: string
- *           type: string
- *           description: User id from UI KIT
- *       example:
- *         profile: 1
- */
-
-/**
- * @swagger
- * tags:
- *   name: Noti
- *   description: managing API
- */
-
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Noti
- *     tags: [User]
- *     parameters:
- *       - in: path
- *         name: id
- *         description: 555 API
- *     responses:
- *       200:
- *         description: ...
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Noti'
- */

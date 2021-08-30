@@ -42,7 +42,6 @@ createChatRoom.post('/', async (req, res) => {
     })
 
     // find sender user blocked
-    //#improve: return blockListStatus even if there is no block list
     const isSenderBlockReceiver = senderBlockList?.some(
       user => user === receiverTrueProfile?.users?.userId
     )
@@ -51,14 +50,10 @@ createChatRoom.post('/', async (req, res) => {
       senderProfile: senderTrueProfile?.users,
       receiverProfile: receiverTrueProfile?.users,
       friendStatus: isFriend?.isFriend,
-      blockListStatus: isSenderBlockReceiver
+      blockListStatus: isSenderBlockReceiver || false
     }
-
+ 
     console.log({
-      // senderAmityProfile,
-      // receiverAmityProfile,
-      // senderTrueProfile,
-      // receiverTrueProfile,
       response
     })
 
@@ -97,7 +92,7 @@ async function registerUser (user) {
       'x-api-key': process.env.API_KEY
     }
   }
-  //#improve: change device to parameter getting from req body 
+  //#improve: change device to parameter getting from req body
   const postData = {
     userId: user?.userId?.toString(),
     deviceId: 'deviceId_test',
@@ -123,7 +118,6 @@ async function registerUser (user) {
 }
 
 // get profile from true
-// จำลองให้เหมือนของ amity
 // #improve: Fail case handle
 async function getProfileFromTrue (user) {
   const profile = {
