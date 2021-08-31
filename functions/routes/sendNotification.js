@@ -6,9 +6,11 @@ const sendNotification = express()
 
 sendNotification.post('/', async (req, res) => {
   try {
-    const messages = req.body
-    const sender = req.body?.senderProfile
-    const receiver = req.body?.receiverProfile
+    const {
+      messages,
+      senderProfile: sender,
+      receiverProfile: receiver
+    } = req.body
 
     // check user profile with true backend
     const senderProfile = await getProfileFromTrue(sender)
@@ -33,9 +35,11 @@ sendNotification.post('/', async (req, res) => {
     if (!isSenderBlockReceiver) {
       !isReceiverBlockSender
         ? res.send(
-          pushNotification({ id: receiverProfile?.userId, msg: messages })
+            pushNotification({ id: receiverProfile?.userId, msg: messages })
           )
-        : res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
+        : res.send(
+            dropNotification({ id: receiverProfile?.userId, msg: messages })
+          )
     } else {
       res.send(dropNotification({ id: receiverProfile?.userId, msg: messages }))
     }

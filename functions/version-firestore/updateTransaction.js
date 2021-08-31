@@ -4,28 +4,29 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
-const updateMessageStatus = express()
+const updateTransaction = express()
 
-updateMessageStatus.put('/', async (req, res) => {
+updateTransaction.put('/', async (req, res) => {
   try {
-    const { message, updateToStatus } = req.body
+    const { transferId } = req.body
 
-    const searchMesseage = await getMessage(message?.id)
+    const searchMesseageTransaction = await getMessageFromTransaction(
+      transferId
+    )
+
+    const searchMesseage = await getMessage(searchMesseageTransaction)
 
     if (!searchMesseage) {
-      console.log('ERRORs message not found', message?.id)
+      console.log('ERRORs message not found')
       res.status(404).json({
         error: 'Request failed "message not found" with status code 404'
       })
     }
 
-    const updateStatus = await updateMessage({
-      id: searchMesseage[0]?.messageId,
-      status: updateToStatus
-    })
-
+    const updateStatus = await updateMessage(searchMesseage?.messageId)
+    console.log({ updateStatus })
     if (!updateStatus) {
-      console.log('ERRORs message not update', message?.id)
+      console.log('ERRORs message not update')
       res.status(404).json({
         error: 'Request failed "message not update" with status code 404'
       })
@@ -46,11 +47,20 @@ updateMessageStatus.put('/', async (req, res) => {
     }
   } catch (error) {
     console.log(`ERRORs in updateMessage function: ${error}`)
-    console.log('Message: ', req.body?.message?.id)
-    console.log('UpdateTo: ', req.body?.updateToStatus)
     res.sendStatus(500)
   }
 })
+
+async function getMessageFromTransaction (id) {
+  try {
+    const msg = await axios.get(
+      `http://localhost:5001/function-firebase-33727/us-central1/getTransaction/${id}`
+    )
+    return msg.data?.messageId
+  } catch (error) {
+    console.log(`ERRORs getMessageFromTransaction() msg : ${error}`)
+  }
+}
 
 async function getMessage (id) {
   // token admin
@@ -64,14 +74,14 @@ async function getMessage (id) {
       `${process.env.PROD_URL}/v3/messages/${id}`,
       configAuth
     )
-    return msg.data?.messages
+    return msg.data?.messages[0]
   } catch (error) {
     console.log(`ERRORs getMessage() msg : ${error}`)
     // return error.response.data
   }
 }
 
-async function updateMessage ({ id, status }) {
+async function updateMessage (id) {
   // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -80,11 +90,9 @@ async function updateMessage ({ id, status }) {
 
   const updateData = {
     data: {
-      text: status.toString()
+      text: 'paid'
     }
   }
-
-  console.log(updateData)
 
   try {
     const msg = await axios.put(
@@ -94,9 +102,8 @@ async function updateMessage ({ id, status }) {
     )
     return msg.data?.messages[0]
   } catch (error) {
-    console.log(error)
     console.log(`ERRORs updateMessage() msg : ${error}`)
   }
 }
 
-exports.updateMessageStatus = builderFunction.onRequest(updateMessageStatus)
+exports.updateTransaction = builderFunction.onRequest(updateTransaction)

@@ -24,7 +24,22 @@ exports.transferMoneySuccess = builderFunction.onRequest(
   transferMoneySuccess.transferMoneySuccess
 )
 
-const versionFireStore = require('./routes/versionFireStore')
-exports.versionFireStore = builderFunction.onRequest(
-  versionFireStore.versionFireStore
+const createTransaction = require('./version-firestore/createTransaction')
+exports.createTransaction = builderFunction.onRequest(
+  createTransaction.createTransaction
+)
+
+const getTransaction = require('./version-firestore/getTransaction')
+exports.getTransaction = builderFunction.onRequest(
+  getTransaction.getTransaction
+)
+
+const updateTransaction = require('./version-firestore/updateTransaction')
+exports.updateTransaction = builderFunction.onRequest(
+  updateTransaction.updateTransaction
+)
+
+const transferMoney = require('./version-firestore/transferMoney')
+exports.transferMoney = builderFunction.onRequest(
+  transferMoney.transferMoney
 )
