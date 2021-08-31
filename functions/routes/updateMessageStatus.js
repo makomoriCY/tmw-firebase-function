@@ -14,11 +14,9 @@ updateMessageStatus.put('/', async (req, res) => {
 
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
-      res
-        .status(404)
-        .json({
-          error: 'Request failed "message not found" with status code 404'
-        })
+      res.status(404).json({
+        error: 'Request failed "message not found" with status code 404'
+      })
     }
 
     const updateStatus = await updateMessage({
@@ -28,11 +26,9 @@ updateMessageStatus.put('/', async (req, res) => {
 
     if (!updateStatus) {
       console.log('ERRORs message not update', message?.id)
-      res
-        .status(404)
-        .json({
-          error: 'Request failed "message not update" with status code 404'
-        })
+      res.status(404).json({
+        error: 'Request failed "message not update" with status code 404'
+      })
     } else {
       const { messageId, data } = updateStatus
 

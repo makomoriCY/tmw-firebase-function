@@ -38,3 +38,8 @@ const updateTransaction = require('./version-firestore/updateTransaction')
 exports.updateTransaction = builderFunction.onRequest(
   updateTransaction.updateTransaction
 )
+
+const transferMoney = require('./version-firestore/transferMoney')
+exports.transferMoney = builderFunction.onRequest(
+  transferMoney.transferMoney
+)
