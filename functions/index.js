@@ -33,3 +33,8 @@ const getTransaction = require('./version-firestore/getTransaction')
 exports.getTransaction = builderFunction.onRequest(
   getTransaction.getTransaction
 )
+
+const updateTransaction = require('./version-firestore/updateTransaction')
+exports.updateTransaction = builderFunction.onRequest(
+  updateTransaction.updateTransaction
+)
