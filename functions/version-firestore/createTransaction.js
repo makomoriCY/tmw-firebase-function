@@ -13,10 +13,18 @@ createTransaction.post('/', async (req, res) => {
     await firestore
       .collection('transaction')
       .doc()
-      .set(data)
+      .set({
+        transferId: data.transferId,
+        messageId: data.messageId,
+        amt: data.amt,
+        currency: data.currency,
+        timestamp: new Date().toString(),
+        sender: data.sender,
+        receiver: data.receiver
+      })
     res.send('Record saved successfuly')
   } catch (error) {
-      console.log(`msg : ${error} `)
+    console.log(`msg : ${error} `)
   }
 })
 

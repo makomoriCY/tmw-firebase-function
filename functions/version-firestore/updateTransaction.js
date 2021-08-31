@@ -12,7 +12,15 @@ updateTransaction.put('/:id', async (req, res) => {
     const id = req.params.id
     const data = req.body
     const transactionId = await firestore.collection('transaction').doc(id)
-    await transactionId.update(data)
+    await transactionId.update({
+        transferId: data.transferId,
+        messageId: data.messageId,
+        amt: data.amt,
+        currency: data.currency,
+        timestamp: new Date().toString(),
+        sender: data.sender,
+        receiver: data.receiver
+    })
     res.send('transaction updated successfuly')
   } catch (error) {
     res.status(400).send(error.message)
