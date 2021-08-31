@@ -61,7 +61,7 @@ async function getMessage (id) {
 
   try {
     const msg = await axios.get(
-      `${process.env.PREFIX_URL}/v3/messages/${id}`,
+      `${process.env.PROD_URL}/v3/messages/${id}`,
       configAuth
     )
     return msg.data?.messages
@@ -88,7 +88,7 @@ async function updateMessage ({ id, status }) {
 
   try {
     const msg = await axios.put(
-      `${process.env.PREFIX_URL}/v3/messages/${id}`,
+      `${process.env.PROD_URL}/v3/messages/${id}`,
       updateData,
       configAuth
     )

@@ -73,7 +73,7 @@ async function getProfileFromAmity (id) {
 
   try {
     const profileAmity = await axios.get(
-      `${process.env.PREFIX_URL}/v3/users/${id}`,
+      `${process.env.PROD_URL}/v3/users/${id}`,
       configAuth
     )
 
@@ -106,7 +106,7 @@ async function registerUser (user) {
 
   try {
     const register = await axios.post(
-      'https://api.amity.co/api/v3/sessions',
+      `${process.env.PROD_URL}/v3/sessions`,
       postData,
       configKeys
     )
