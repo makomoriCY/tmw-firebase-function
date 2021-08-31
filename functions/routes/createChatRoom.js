@@ -9,9 +9,8 @@ const createChatRoom = express()
 createChatRoom.post('/', async (req, res) => {
   try {
     //get profile from req?.body
-    const senderProfile = req.body?.senderProfile
-    const receiverProfile = req.body?.receiverProfile
-    const senderBlockList = req.body?.senderProfile?.metadata?.blockList
+    const { senderProfile, receiverProfile } = req.body
+    const senderBlockList = senderProfile?.metadata?.blockList
 
     // get profile form amity backend
     let senderAmityProfile,
@@ -52,7 +51,7 @@ createChatRoom.post('/', async (req, res) => {
       friendStatus: isFriend?.isFriend,
       blockListStatus: isSenderBlockReceiver || false
     }
- 
+
     console.log({
       response
     })
