@@ -24,7 +24,7 @@ exports.transferMoneySuccess = builderFunction.onRequest(
   transferMoneySuccess.transferMoneySuccess
 )
 
-const versionFireStore = require('./routes/versionFireStore')
+const createTransaction = require('./version-firestore/createTransaction')
 exports.versionFireStore = builderFunction.onRequest(
-  versionFireStore.versionFireStore
+  createTransaction.createTransaction
 )
