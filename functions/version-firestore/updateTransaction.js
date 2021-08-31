@@ -16,8 +16,6 @@ updateTransaction.put('/', async (req, res) => {
 
     const searchMesseage = await getMessage(searchMesseageTransaction)
 
-    console.log({ searchMesseageTransaction, searchMesseage })
-
     if (!searchMesseage) {
       console.log('ERRORs message not found')
       res.status(404).json({
@@ -25,11 +23,8 @@ updateTransaction.put('/', async (req, res) => {
       })
     }
 
-    const updateStatus = await updateMessage({
-      id: searchMesseage[0]?.messageId,
-      status: 'paid'
-    })
-
+    const updateStatus = await updateMessage(searchMesseage?.messageId)
+    console.log({ updateStatus })
     if (!updateStatus) {
       console.log('ERRORs message not update')
       res.status(404).json({
@@ -75,16 +70,18 @@ async function getMessage (id) {
   }
 
   try {
-    const msg = await axios.get(`${process.env.PROD_URL}/v3/messages/${id}`, configAuth)
-    console.log('pls', msg.data)
-    return msg.data
+    const msg = await axios.get(
+      `${process.env.PROD_URL}/v3/messages/${id}`,
+      configAuth
+    )
+    return msg.data?.messages[0]
   } catch (error) {
     console.log(`ERRORs getMessage() msg : ${error}`)
     // return error.response.data
   }
 }
 
-async function updateMessage ({ id, status }) {
+async function updateMessage (id) {
   // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -93,11 +90,9 @@ async function updateMessage ({ id, status }) {
 
   const updateData = {
     data: {
-      text: status.toString()
+      text: 'paid'
     }
   }
-
-  console.log(updateData)
 
   try {
     const msg = await axios.put(

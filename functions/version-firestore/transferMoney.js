@@ -7,17 +7,19 @@ const transferMoney = express()
 
 transferMoney.post('/', async (req, res) => {
   try {
-    const transfer = req.body
+    const { transferId } = req.body
 
-    const updateMessage = await updateMessageStatus(transfer)
+    const updateMessage = await updateMessageStatus(transferId)
+
+    const transferData = await getTransaction(transferId)
 
     if (updateMessage) {
-      const sendNoti = await sendNotification(transfer)
+      const sendNoti = await sendNotification(transferData)
       sendNoti
         ? res.send('transfer success')
         : res.status(404).json({
             error:
-              'Request failed: could not send notification with status code 404'
+              'Request failed: could not send notification with  status code 404'
           })
     } else {
       res.status(404).json({
@@ -30,6 +32,17 @@ transferMoney.post('/', async (req, res) => {
     res.sendStatus(500)
   }
 })
+
+async function getTransaction (id) {
+  try {
+    const msg = await axios.get(
+      `http://localhost:5001/function-firebase-33727/us-central1/getTransaction/${id}`
+    )
+    return msg.data
+  } catch (error) {
+    console.log(`ERRORs getMessageFromTransaction() msg : ${error}`)
+  }
+}
 
 // update message
 async function updateMessageStatus (data) {
@@ -53,7 +66,7 @@ async function updateMessageStatus (data) {
 
   try {
     const updateMsg = await axios.put(
-      'http://localhost:5001/function-firebase-33727/us-central1/updateMessageStatus',
+      'http://localhost:5001/function-firebase-33727/us-central1/updateTransaction',
       postData,
       configAuth
     )
