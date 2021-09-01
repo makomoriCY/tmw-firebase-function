@@ -37,7 +37,7 @@ async function updateMessageStatus (id) {
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-
+  // ถามแม็กเรื่อง metadata.status
   const postData = {
     message: {
       id: id,
