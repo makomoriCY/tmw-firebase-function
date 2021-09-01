@@ -12,7 +12,8 @@ transferMoneySuccess.post('/', async (req, res) => {
     const updateMessage = await updateMessageStatus(transferId)
 
     if (updateMessage) {
-      const sendNoti = await sendNotification(transfer)
+      const message = await getMessageFromTransaction(transferId)
+      const sendNoti = await sendNotification(message)
       sendNoti
         ? res.send('transfer success')
         : res.status(404).json({
@@ -99,6 +100,16 @@ async function sendNotification (data) {
     return sendNoti
   } catch (error) {
     console.log(`sendMessageNotification() msg : ${error}`)
+  }
+}
+
+async function getMessageFromTransaction (id) {
+  try {
+    const transactionId = await firestore.collection('transaction').doc(id)
+    const data = await transactionId.get()
+    return data.data()
+  } catch (error) {
+    console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
   }
 }
 
