@@ -7,9 +7,9 @@ const transferMoneySuccess = express()
 
 transferMoneySuccess.post('/', async (req, res) => {
   try {
-    const transfer = req.body
+    const { transferId } = req.body
 
-    const updateMessage = await updateMessageStatus(transfer)
+    const updateMessage = await updateMessageStatus(transferId)
 
     if (updateMessage) {
       const sendNoti = await sendNotification(transfer)
@@ -26,13 +26,11 @@ transferMoneySuccess.post('/', async (req, res) => {
     }
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
-    console.log('transactionId: ', req.body.transferId)
     res.sendStatus(500)
   }
 })
 
-// update message
-async function updateMessageStatus (data) {
+async function updateMessageStatus (id) {
   const token =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4M2MzYzdkOWRiOWNhNDkwNGI4NmYxMzcwYTQ1MzUzNjE5Yzk5ODMxMDAzMTA1NTQyYzljOTk3MGE2NzI0ZTRmNjE4MzAwZDc0MjU3ZmM3NzU4OWE0NjI2OTVmMjc2MGZhNTkwOTU4ZmI5M2NiZWU5ZTU2ZjA0ZjMzZGI2NDM0YmQxOGQ3OTE1Mjg3NjllMzZmMWFhYzQ0NzlhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwN2FiMjMwMmI1MDliOTNiNTA4YTg1YmI0MGMyNWNjNmY1ZWU3MmUyYzM2MzIxZTk1IiwiaWF0IjoxNjI5NzgxODIzLCJleHAiOjE2NjEzMTc4MjN9.fESNbJwfreR_3L0YIl9JYVhK-ZO-5kXLtX8pTtzEQhE'
   const configAuth = {
@@ -41,7 +39,7 @@ async function updateMessageStatus (data) {
 
   const postData = {
     message: {
-      id: data?.transferId,
+      id: id,
       data: 'จ่ายแล้ว',
       metadata: {
         type: 'transfer',
@@ -64,7 +62,6 @@ async function updateMessageStatus (data) {
   }
 }
 
-// send notification
 async function sendNotification (data) {
   const token =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4M2MzYzdkOWRiOWNhNDkwNGI4NmYxMzcwYTQ1MzUzNjE5Yzk5ODMxMDAzMTA1NTQyYzljOTk3MGE2NzI0ZTRmNjE4MzAwZDc0MjU3ZmM3NzU4OWE0NjI2OTVmMjc2MGZhNTkwOTU4ZmI5M2NiZWU5ZTU2ZjA0ZjMzZGI2NDM0YmQxOGQ3OTE1Mjg3NjllMzZmMWFhYzQ0NzlhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwN2FiMjMwMmI1MDliOTNiNTA4YTg1YmI0MGMyNWNjNmY1ZWU3MmUyYzM2MzIxZTk1IiwiaWF0IjoxNjI5NzgxODIzLCJleHAiOjE2NjEzMTc4MjN9.fESNbJwfreR_3L0YIl9JYVhK-ZO-5kXLtX8pTtzEQhE'

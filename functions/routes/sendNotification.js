@@ -67,7 +67,6 @@ function dropNotification ({ id, msg }) {
   return status
 }
 
-// fetch profile from true
 function getProfileFromTrue (profile) {
   return profile
 }

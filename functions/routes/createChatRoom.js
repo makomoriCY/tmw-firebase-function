@@ -8,7 +8,6 @@ const createChatRoom = express()
 
 createChatRoom.post('/', async (req, res) => {
   try {
-    //get profile from req?.body
     const { senderProfile, receiverProfile } = req.body
     const senderBlockList = senderProfile?.metadata?.blockList
 
@@ -64,7 +63,6 @@ createChatRoom.post('/', async (req, res) => {
   }
 })
 
-// get profile from amity backend
 async function getProfileFromAmity (id) {
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -85,7 +83,6 @@ async function getProfileFromAmity (id) {
 
 // register user
 async function registerUser (user) {
-  //x-api-key ของ app เก็บเป็น static ไว้ที่ .env
   const configKeys = {
     headers: {
       'x-api-key': process.env.X_API_KEY

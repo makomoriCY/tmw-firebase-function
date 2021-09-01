@@ -15,9 +15,9 @@ updateMessageStatus.put('/', async (req, res) => {
 
     let searchMesseage
     updateToStatus === 'paid'
-    ? (searchMesseage = await getMessageFromTransaction(message?.id))
-    : (searchMesseage = await getMessageFromAmity(message?.id))
-    
+      ? (searchMesseage = await getMessageFromTransaction(message?.id))
+      : (searchMesseage = await getMessageFromAmity(message?.id))
+    console.log({ searchMesseage })
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
       res.status(404).json({
@@ -69,7 +69,6 @@ async function getMessageFromTransaction (id) {
 }
 
 async function getMessageFromAmity (id) {
-  // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
@@ -88,7 +87,6 @@ async function getMessageFromAmity (id) {
 }
 
 async function updateMessage ({ id, status }) {
-  // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
