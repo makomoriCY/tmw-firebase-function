@@ -25,31 +25,31 @@ updateMessageStatus.put('/', async (req, res) => {
       })
     }
 
-    // const updateStatus = await updateMessage({
-    //   id: searchMesseage,
-    //   status: updateToStatus
-    // })
+    const updateStatus = await updateMessage({
+      id: searchMesseage,
+      status: updateToStatus
+    })
 
-    // if (!updateStatus) {
-    //   console.log('ERRORs message not update', message?.id)
-    //   res.status(404).json({
-    //     error: 'Request failed "message not update" with status code 404'
-    //   })
-    // } else {
-    //   const { messageId, data } = updateStatus
+    if (!updateStatus) {
+      console.log('ERRORs message not update', message?.id)
+      res.status(404).json({
+        error: 'Request failed "message not update" with status code 404'
+      })
+    } else {
+      const { messageId, data } = updateStatus
 
-    //   const response = {
-    //     message: {
-    //       id: messageId,
-    //       data: `[${data.text}] 55555`,
-    //       metadata: {
-    //         type: 'transfer',
-    //         status: data.text
-    //       }
-    //     }
-    //   }
-    //   res.send(response)
-    // }
+      const response = {
+        message: {
+          id: messageId,
+          data: `[${data.text}] 55555`,
+          metadata: {
+            type: 'transfer',
+            status: data.text
+          }
+        }
+      }
+      res.send(response)
+    }
   } catch (error) {
     console.log(`ERRORs in updateMessage function: ${error}`)
     console.log('Message: ', req.body?.message?.id)
@@ -91,7 +91,7 @@ async function updateMessage ({ id, status }) {
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-
+  // รอคุยเรื่อง structure (status, data.text)
   const updateData = {
     data: {
       text: status.toString()
