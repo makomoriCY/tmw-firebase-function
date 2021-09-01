@@ -18,7 +18,6 @@ updateMessageStatus.put('/', async (req, res) => {
     ? (searchMesseage = await getMessageFromTransaction(message?.id))
     : (searchMesseage = await getMessageFromAmity(message?.id))
     
-    console.log('555', searchMesseage)
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
       res.status(404).json({
@@ -63,7 +62,6 @@ async function getMessageFromTransaction (id) {
   try {
     const transactionId = await firestore.collection('transaction').doc(id)
     const data = await transactionId.get()
-    console.log('888', data.data())
     return data.data()?.messageId
   } catch (error) {
     console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
