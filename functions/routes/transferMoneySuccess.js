@@ -15,19 +15,14 @@ transferMoneySuccess.post('/', async (req, res) => {
       const sendNoti = await sendNotification(transfer)
       sendNoti
         ? res.send('transfer success')
-        : res
-            .status(404)
-            .json({
-              error:
-                'Request failed: could not send notification with status code 404'
-            })
+        : res.status(404).json({
+            error:
+              'Request failed: could not send notification with status code 404'
+          })
     } else {
-      res
-        .status(404)
-        .json({
-          error:
-            'Request failed: could not update message  with status code 404'
-        })
+      res.status(404).json({
+        error: 'Request failed: could not update message  with status code 404'
+      })
     }
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
@@ -46,8 +41,8 @@ async function updateMessageStatus (data) {
 
   const postData = {
     message: {
-      id: data?.messageId,
-      data: 'kkkkkk',
+      id: data?.transferId,
+      data: 'จ่ายแล้ว',
       metadata: {
         type: 'transfer',
         status: 'request'

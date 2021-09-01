@@ -4,14 +4,21 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
+const firebase = require('../db')
+const firestore = firebase.firestore()
+
 const updateMessageStatus = express()
 
 updateMessageStatus.put('/', async (req, res) => {
   try {
     const { message, updateToStatus } = req.body
 
-    const searchMesseage = await getMessage(message?.id)
-
+    let searchMesseage
+    updateToStatus === 'paid'
+    ? (searchMesseage = await getMessageFromTransaction(message?.id))
+    : (searchMesseage = await getMessageFromAmity(message?.id))
+    
+    console.log('555', searchMesseage)
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
       res.status(404).json({
@@ -19,31 +26,31 @@ updateMessageStatus.put('/', async (req, res) => {
       })
     }
 
-    const updateStatus = await updateMessage({
-      id: searchMesseage[0]?.messageId,
-      status: updateToStatus
-    })
+    // const updateStatus = await updateMessage({
+    //   id: searchMesseage,
+    //   status: updateToStatus
+    // })
 
-    if (!updateStatus) {
-      console.log('ERRORs message not update', message?.id)
-      res.status(404).json({
-        error: 'Request failed "message not update" with status code 404'
-      })
-    } else {
-      const { messageId, data } = updateStatus
+    // if (!updateStatus) {
+    //   console.log('ERRORs message not update', message?.id)
+    //   res.status(404).json({
+    //     error: 'Request failed "message not update" with status code 404'
+    //   })
+    // } else {
+    //   const { messageId, data } = updateStatus
 
-      const response = {
-        message: {
-          id: messageId,
-          data: `[${data.text}] 55555`,
-          metadata: {
-            type: 'transfer',
-            status: data.text
-          }
-        }
-      }
-      res.send(response)
-    }
+    //   const response = {
+    //     message: {
+    //       id: messageId,
+    //       data: `[${data.text}] 55555`,
+    //       metadata: {
+    //         type: 'transfer',
+    //         status: data.text
+    //       }
+    //     }
+    //   }
+    //   res.send(response)
+    // }
   } catch (error) {
     console.log(`ERRORs in updateMessage function: ${error}`)
     console.log('Message: ', req.body?.message?.id)
@@ -52,7 +59,18 @@ updateMessageStatus.put('/', async (req, res) => {
   }
 })
 
-async function getMessage (id) {
+async function getMessageFromTransaction (id) {
+  try {
+    const transactionId = await firestore.collection('transaction').doc(id)
+    const data = await transactionId.get()
+    console.log('888', data.data())
+    return data.data()?.messageId
+  } catch (error) {
+    console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
+  }
+}
+
+async function getMessageFromAmity (id) {
   // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -64,9 +82,9 @@ async function getMessage (id) {
       `${process.env.PROD_URL}/v3/messages/${id}`,
       configAuth
     )
-    return msg.data?.messages
+    return msg.data?.messages[0]?.messageId
   } catch (error) {
-    console.log(`ERRORs getMessage() msg : ${error}`)
+    console.log(`ERRORs getMessageFromAmity() msg : ${error}`)
     // return error.response.data
   }
 }
