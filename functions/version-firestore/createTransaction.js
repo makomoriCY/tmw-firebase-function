@@ -10,9 +10,10 @@ const createTransaction = express()
 createTransaction.post('/', async (req, res) => {
   try {
     const data = req.body
+    const ref = firestore.collection('transaction').doc()
     await firestore
       .collection('transaction')
-      .doc()
+      .doc(ref.id)
       .set({
         transferId: ref.id,
         messageId: data.messageId,
