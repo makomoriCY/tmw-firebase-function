@@ -4,14 +4,20 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
+const firebase = require('../db')
+const firestore = firebase.firestore()
+
 const updateMessageStatus = express()
 
 updateMessageStatus.put('/', async (req, res) => {
   try {
     const { message, updateToStatus } = req.body
 
-    const searchMesseage = await getMessage(message?.id)
-
+    let searchMesseage
+    updateToStatus === 'paid'
+      ? (searchMesseage = await getMessageFromTransaction(message?.id))
+      : (searchMesseage = await getMessageFromAmity(message?.id))
+    console.log({ searchMesseage })
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
       res.status(404).json({
@@ -20,7 +26,7 @@ updateMessageStatus.put('/', async (req, res) => {
     }
 
     const updateStatus = await updateMessage({
-      id: searchMesseage[0]?.messageId,
+      id: searchMesseage,
       status: updateToStatus
     })
 
@@ -52,8 +58,17 @@ updateMessageStatus.put('/', async (req, res) => {
   }
 })
 
-async function getMessage (id) {
-  // token admin
+async function getMessageFromTransaction (id) {
+  try {
+    const transactionId = await firestore.collection('transaction').doc(id)
+    const data = await transactionId.get()
+    return data.data()?.messageId
+  } catch (error) {
+    console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
+  }
+}
+
+async function getMessageFromAmity (id) {
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
@@ -64,20 +79,19 @@ async function getMessage (id) {
       `${process.env.PROD_URL}/v3/messages/${id}`,
       configAuth
     )
-    return msg.data?.messages
+    return msg.data?.messages[0]?.messageId
   } catch (error) {
-    console.log(`ERRORs getMessage() msg : ${error}`)
+    console.log(`ERRORs getMessageFromAmity() msg : ${error}`)
     // return error.response.data
   }
 }
 
 async function updateMessage ({ id, status }) {
-  // token admin
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-
+  // รอคุยเรื่อง structure (status, data.text)
   const updateData = {
     data: {
       text: status.toString()

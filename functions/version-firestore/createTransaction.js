@@ -14,7 +14,7 @@ createTransaction.post('/', async (req, res) => {
       .collection('transaction')
       .doc()
       .set({
-        transferId: data.transferId,
+        transferId: ref.id,
         messageId: data.messageId,
         amt: data.amt,
         currency: data.currency,
