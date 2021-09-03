@@ -48,3 +48,14 @@ module.exports = validateFirebaseIdToken = async (req, res, next) => {
     return
   }
 }
+
+
+/**
+ * 1. https://api.amity.co/api/v3/authentication/token?userId=2
+ * - ส่ง x-api-keys มาใน headers + userId
+ * 
+ * 2. https://api.amity.co/api/v3/sessions
+ * - เอา token ไปลงทะเบียน sessions
+ * 
+ * เอา accessToken ไปใช้งาน
+ */
