@@ -1,10 +1,15 @@
 const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 const express = require('express')
-const authMiddleware = require('../authMiddleware');
 const getBadWords = express()
-getBadWords.use(authMiddleware)
 require('dotenv').config()
+
+const {
+  validateFirebaseIdToken,
+  validateAmityIdToken
+} = require('../authMiddleware')
+
+getBadWords.use(validateAmityIdToken)
 
 getBadWords.get('/', async (req, res) => {
   try {

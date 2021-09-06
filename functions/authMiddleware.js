@@ -1,6 +1,8 @@
 const admin = require('firebase-admin')
+const axios = require('axios')
+require('dotenv').config()
 
-module.exports = validateFirebaseIdToken = async (req, res, next) => {
+const validateFirebaseIdToken = async (req, res, next) => {
   console.log('Check if request is authorized with Firebase ID token')
 
   if (
@@ -8,12 +10,7 @@ module.exports = validateFirebaseIdToken = async (req, res, next) => {
       !req.headers.authorization.startsWith('Bearer ')) &&
     !(req.cookies && req.cookies.__session)
   ) {
-    console.error(
-      'No Firebase ID token was passed as a Bearer token in the Authorization header.',
-      'Make sure you authorize your request by providing the following HTTP header:',
-      'Authorization: Bearer <Firebase ID Token>',
-      'or by passing a "__session" cookie.'
-    )
+    console.error('No Firebase ID token')
     res.status(403).send('Unauthorized')
     return
   }
@@ -49,13 +46,78 @@ module.exports = validateFirebaseIdToken = async (req, res, next) => {
   }
 }
 
+const validateAmityIdToken = async (req, res, next) => {
+  const userId = req.body?.userId
+  const serverKey = req.header('x-server-key')
+
+  if (!(userId && serverKey)) return res.status(403).send('Unauthorized')
+
+  try {
+    const token = await getToken({ userId: userId, serverKey: serverKey })
+    const accessToken = await registerSession({ userId: userId, token: token })
+
+    if (!accessToken) return res.status(403).send('Unauthorized')
+
+    next()
+  } catch (error) {
+    console.log(`ERRORs in main auth() : ${error}`)
+  }
+}
+
+const getToken = async ({ userId, serverKey }) => {
+  const configAuth = {
+    headers: { 'x-server-key': serverKey }
+  }
+
+  try {
+    const token = await axios.get(
+      `${process.env.PROD_URL}/v3/authentication/token?userId=${userId}`,
+      configAuth
+    )
+    console.log('token', token.data)
+    return token.data
+  } catch (error) {
+    console.log(`ERRORs in getToken() : ${error}`)
+  }
+}
+
+const registerSession = async ({ userId, token }) => {
+  const configAuth = {
+    headers: { 'x-api-key': process.env.X_API_KEY }
+  }
+
+  const postData = {
+    userId: userId,
+    deviceId: 'deviceId',
+    deviceInfo: {
+      kind: 'ios',
+      model: 'string',
+      sdkVersion: 'string'
+    },
+    authToken: token
+  }
+
+  try {
+    const accessToken = await axios.post(
+      `${process.env.PROD_URL}/v3/sessions`,
+      postData,
+      configAuth
+    )
+    console.log('accessToken', accessToken)
+    return accessToken.data?.accessToken
+  } catch (error) {
+    console.log(`ERRORs in registerSession() : ${error}`)
+  }
+}
+
+module.exports = { validateFirebaseIdToken, validateAmityIdToken }
 
 /**
  * 1. https://api.amity.co/api/v3/authentication/token?userId=2
  * - ส่ง x-api-keys มาใน headers + userId
- * 
+ *
  * 2. https://api.amity.co/api/v3/sessions
  * - เอา token ไปลงทะเบียน sessions
- * 
+ *
  * เอา accessToken ไปใช้งาน
  */
