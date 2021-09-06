@@ -7,9 +7,9 @@ const MOCK_USERNAME = process.env.MOCK_USERNAME
 const MOCK_PASSWORD = process.env.MOCK_PASSWORD
 const SECRET_KEY = process.env.SECRET_KEY
 
-const createToken = async (req, res) => {
-  const { username = '', password = '' } = req.body
-  if (!(username && password)) return res.status(409).send('All input require')
+const createToken = (req, res) => {
+  const { username, password } = req.body
+  if (!(username && password)) return res.status(400).send('All input require')
 
   try {
     const token = jwt.sign({ username, password }, SECRET_KEY, {
