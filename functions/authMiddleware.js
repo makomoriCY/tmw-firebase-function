@@ -1,6 +1,39 @@
 const admin = require('firebase-admin')
 const axios = require('axios')
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
+
+const MOCK_USERNAME = process.env.MOCK_USERNAME
+const MOCK_PASSWORD = process.env.MOCK_PASSWORD
+const SECRET_KEY = process.env.SECRET_KEY
+
+const createToken = async (req, res) => {
+  const { username = '', password = '' } = req.body
+  if (!(username && password)) return res.status(409).send('All input require')
+
+  try {
+    const token = jwt.sign({ username, password }, SECRET_KEY, {
+      expiresIn: '7d'
+    })
+    res.json({ token })
+  } catch (error) {
+    res.status(403).send(error)
+  }
+}
+
+const verifyToken = (req, res, next) => {
+  try {
+    const idToken = req.headers.authorization.split('Bearer ')[1]
+    const decoded = jwt?.verify(idToken, SECRET_KEY)
+    const { username, password } = decoded
+    if (username !== MOCK_USERNAME || password !== MOCK_PASSWORD)
+      return res.status(403).send('Unauthorized')
+
+    next()
+  } catch (error) {
+    res.status(403).send(error)
+  }
+}
 
 const validateFirebaseIdToken = async (req, res, next) => {
   console.log('Check if request is authorized with Firebase ID token')
@@ -110,7 +143,12 @@ const registerSession = async ({ userId, token }) => {
   }
 }
 
-module.exports = { validateFirebaseIdToken, validateAmityIdToken }
+module.exports = {
+  validateFirebaseIdToken,
+  validateAmityIdToken,
+  verifyToken,
+  createToken
+}
 
 /**
  * 1. https://api.amity.co/api/v3/authentication/token?userId=2

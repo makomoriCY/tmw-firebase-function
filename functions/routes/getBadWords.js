@@ -5,11 +5,11 @@ const getBadWords = express()
 require('dotenv').config()
 
 const {
-  validateFirebaseIdToken,
-  validateAmityIdToken
+  createToken,
+  verifyToken
 } = require('../authMiddleware')
 
-getBadWords.use(validateAmityIdToken)
+getBadWords.use(verifyToken)
 
 getBadWords.get('/', async (req, res) => {
   try {
