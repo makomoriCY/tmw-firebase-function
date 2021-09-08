@@ -70,59 +70,63 @@ const verifyToken = (req, res, next) => {
 //   }
 // }
 
-const validateFirebaseIdToken = async (req, res, next) => {
-  console.log('Check if request is authorized with Firebase ID token')
+// const validateFirebaseIdToken = async (req, res, next) => {
+//   console.log('Check if request is authorized with Firebase ID token')
 
-  if (
-    (!req.headers.authorization ||
-      !req.headers.authorization.startsWith('Bearer ')) &&
-    !(req.cookies && req.cookies.__session)
-  ) {
-    console.error('No Firebase ID token')
-    res.status(403).send('Unauthorized')
-    return
-  }
+//   if (
+//     (!req.headers.authorization ||
+//       !req.headers.authorization.startsWith('Bearer ')) &&
+//     !(req.cookies && req.cookies.__session)
+//   ) {
+//     console.error('No Firebase ID token')
+//     res.status(403).send('Unauthorized')
+//     return
+//   }
 
-  let idToken
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer ')
-  ) {
-    console.log('Found "Authorization" header')
-    // Read the ID Token from the Authorization header.
-    idToken = req.headers.authorization.split('Bearer ')[1]
-  } else if (req.cookies) {
-    console.log('Found "__session" cookie')
-    // Read the ID Token from cookie.
-    idToken = req.cookies.__session
-  } else {
-    // No cookie
-    res.status(403).send('Unauthorized')
-    return
-  }
+//   let idToken
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith('Bearer ')
+//   ) {
+//     console.log('Found "Authorization" header')
+//     // Read the ID Token from the Authorization header.
+//     idToken = req.headers.authorization.split('Bearer ')[1]
+//   } else if (req.cookies) {
+//     console.log('Found "__session" cookie')
+//     // Read the ID Token from cookie.
+//     idToken = req.cookies.__session
+//   } else {
+//     // No cookie
+//     res.status(403).send('Unauthorized')
+//     return
+//   }
 
-  try {
-    const decodedIdToken = await admin.auth().verifyIdToken(idToken)
-    console.log('ID Token correctly decoded', decodedIdToken)
-    req.user = decodedIdToken
-    next()
-    return
-  } catch (error) {
-    console.error('Error while verifying Firebase ID token:', error)
-    res.status(403).send('Unauthorized')
-    return
-  }
-}
+//   try {
+//     const decodedIdToken = await admin.auth().verifyIdToken(idToken)
+//     console.log('ID Token correctly decoded', decodedIdToken)
+//     req.user = decodedIdToken
+//     next()
+//     return
+//   } catch (error) {
+//     console.error('Error while verifying Firebase ID token:', error)
+//     res.status(403).send('Unauthorized')
+//     return
+//   }
+// }
 
 const validateAmityIdToken = async (req, res, next) => {
   const userId = req.body?.userId
-  const serverKey = req.header('x-server-key')
+  const apiKey = req.header('x-api-key')
+  const token = req.headers.authorization.split('Bearer ')[1]
 
-  if (!(userId && serverKey)) return res.status(403).send('Unauthorized')
+  if (!(userId && apiKey && token)) return res.status(403).send('Unauthorized')
 
   try {
-    const token = await getToken({ userId: userId, serverKey: serverKey })
-    const accessToken = await registerSession({ userId: userId, token: token })
+    const accessToken = await registerSession({
+      userId: userId,
+      token: token,
+      apiKey: apiKey
+    })
 
     if (!accessToken) return res.status(403).send('Unauthorized')
 
@@ -132,26 +136,26 @@ const validateAmityIdToken = async (req, res, next) => {
   }
 }
 
-const getToken = async ({ userId, serverKey }) => {
-  const configAuth = {
-    headers: { 'x-server-key': serverKey }
-  }
+// const getToken = async ({ userId, serverKey }) => {
+//   const configAuth = {
+//     headers: { 'x-server-key': serverKey }
+//   }
 
-  try {
-    const token = await axios.get(
-      `${process.env.PROD_URL}/v3/authentication/token?userId=${userId}`,
-      configAuth
-    )
-    console.log('token', token.data)
-    return token.data
-  } catch (error) {
-    console.log(`ERRORs in getToken() : ${error}`)
-  }
-}
+//   try {
+//     const token = await axios.get(
+//       `${process.env.PROD_URL}/v3/authentication/token?userId=${userId}`,
+//       configAuth
+//     )
+//     console.log('token', token.data)
+//     return token.data
+//   } catch (error) {
+//     console.log(`ERRORs in getToken() : ${error}`)
+//   }
+// }
 
-const registerSession = async ({ userId, token }) => {
+const registerSession = async ({ userId, token, apiKey }) => {
   const configAuth = {
-    headers: { 'x-api-key': process.env.X_API_KEY }
+    headers: { 'x-api-key': apiKey }
   }
 
   const postData = {
@@ -164,7 +168,6 @@ const registerSession = async ({ userId, token }) => {
     },
     authToken: token
   }
-
   try {
     const accessToken = await axios.post(
       `${process.env.PROD_URL}/v3/sessions`,
@@ -179,7 +182,6 @@ const registerSession = async ({ userId, token }) => {
 }
 
 module.exports = {
-  validateFirebaseIdToken,
   validateAmityIdToken,
   verifyToken,
   createToken
