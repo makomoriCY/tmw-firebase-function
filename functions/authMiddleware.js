@@ -2,9 +2,11 @@ const admin = require('firebase-admin')
 const axios = require('axios')
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
+var CryptoJS = require('crypto-js')
 
 const MOCK_USERNAME = process.env.MOCK_USERNAME
 const MOCK_PASSWORD = process.env.MOCK_PASSWORD
+const ADMINROLE = `${MOCK_USERNAME}:${MOCK_PASSWORD}`
 const SECRET_KEY = process.env.SECRET_KEY
 
 const createToken = (req, res) => {
@@ -12,10 +14,11 @@ const createToken = (req, res) => {
   if (!(username && password)) return res.status(400).send('All input require')
 
   try {
-    const token = jwt.sign({ username, password }, SECRET_KEY, {
-      expiresIn: '7d'
-    })
-    res.json({ token })
+    const originalText = CryptoJS.AES.encrypt(
+      `${username}:${password}`,
+      SECRET_KEY
+    ).toString()
+    res.json({ originalText })
   } catch (error) {
     res.status(400).send(error)
   }
@@ -24,16 +27,48 @@ const createToken = (req, res) => {
 const verifyToken = (req, res, next) => {
   try {
     const idToken = req.headers.authorization.split('Bearer ')[1]
-    const decoded = jwt?.verify(idToken, SECRET_KEY)
-    const { username, password } = decoded
-    if (username !== MOCK_USERNAME || password !== MOCK_PASSWORD)
-      return res.status(403).send('Unauthorized')
-
+    const bytes = CryptoJS.AES.decrypt(idToken, SECRET_KEY)
+    const originalText = bytes.toString(CryptoJS.enc.Utf8)
+    console.log({
+      idToken,
+      bytes,
+      originalText,
+      ADMINROLE
+    })
+    if (originalText !== ADMINROLE) return res.status(403).send('Unauthorized')
     next()
   } catch (error) {
     res.status(403).send(error)
   }
 }
+
+// const createToken = (req, res) => {
+//   const { username, password } = req.body
+//   if (!(username && password)) return res.status(400).send('All input require')
+
+//   try {
+//     const token = jwt.sign({ username, password }, SECRET_KEY, {
+//       expiresIn: '7d'
+//     })
+//     res.json({ token })
+//   } catch (error) {
+//     res.status(400).send(error)
+//   }
+// }
+
+// const verifyToken = (req, res, next) => {
+//   try {
+//     const idToken = req.headers.authorization.split('Bearer ')[1]
+//     const decoded = jwt?.verify(idToken, SECRET_KEY)
+//     const { username, password } = decoded
+//     if (username !== MOCK_USERNAME || password !== MOCK_PASSWORD)
+//       return res.status(403).send('Unauthorized')
+
+//     next()
+//   } catch (error) {
+//     res.status(403).send(error)
+//   }
+// }
 
 const validateFirebaseIdToken = async (req, res, next) => {
   console.log('Check if request is authorized with Firebase ID token')

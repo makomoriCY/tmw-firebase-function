@@ -9,7 +9,7 @@ const {
   verifyToken
 } = require('../authMiddleware')
 
-getBadWords.use(createToken)
+getBadWords.use(verifyToken)
 
 getBadWords.get('/', async (req, res) => {
   try {
