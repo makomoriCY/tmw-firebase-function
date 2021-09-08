@@ -6,10 +6,11 @@ require('dotenv').config()
 
 const {
   createToken,
-  verifyToken
+  verifyToken,
+  validateAmityIdToken
 } = require('../authMiddleware')
 
-getBadWords.use(createToken)
+getBadWords.use(validateAmityIdToken)
 
 getBadWords.get('/', async (req, res) => {
   try {
