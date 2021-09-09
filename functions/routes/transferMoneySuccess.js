@@ -3,31 +3,42 @@ const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
 
+const firebase = require('../db')
+const firestore = firebase.firestore()
+
 const transferMoneySuccess = express()
 
 transferMoneySuccess.post('/', async (req, res) => {
   try {
-    const { transferId } = req.body
+    const transferRef = req.body.transferRef
+    
+    const transaction = await getDataFromTransaction(transferRef)
 
-    const updateMessage = await updateMessageStatus(transferId)
+    const { messageId, sender, receiver, amt, currency } = transaction
 
-    if (updateMessage) {
-      const message = await getMessageFromTransaction(transferId)
-      const sendNoti = await sendNotification(message)
-      sendNoti
-        ? res.send('transfer success')
-        : res.status(404).json({
-            error:
-              'Request failed: could not send notification with status code 404'
-          })
-    } else {
-      res.status(404).json({
-        error: 'Request failed: could not update message  with status code 404'
-      })
+    const updateMessage = await updateMessageStatus(messageId)
+
+    if (updateMessage.metadata.status !== 'paid')
+      return res
+        .status(404)
+        .send(
+          'Request failed: could not send notification with status code 404'
+        )
+      
+    const createSlip = {
+      amount: amt,
+      currency: currency,
+      sender: sender,
+      receiver: receiver,
+      time: 1,
+      transferRef: transferRef,
+      note : 1 || ''
     }
+
+    res.send(createSlip)
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
-    res.sendStatus(500)
+    res.status(500).send('Request failed')
   }
 })
 
@@ -63,53 +74,14 @@ async function updateMessageStatus (id) {
   }
 }
 
-async function sendNotification (data) {
-  const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4M2MzYzdkOWRiOWNhNDkwNGI4NmYxMzcwYTQ1MzUzNjE5Yzk5ODMxMDAzMTA1NTQyYzljOTk3MGE2NzI0ZTRmNjE4MzAwZDc0MjU3ZmM3NzU4OWE0NjI2OTVmMjc2MGZhNTkwOTU4ZmI5M2NiZWU5ZTU2ZjA0ZjMzZGI2NDM0YmQxOGQ3OTE1Mjg3NjllMzZmMWFhYzQ0NzlhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwN2FiMjMwMmI1MDliOTNiNTA4YTg1YmI0MGMyNWNjNmY1ZWU3MmUyYzM2MzIxZTk1IiwiaWF0IjoxNjI5NzgxODIzLCJleHAiOjE2NjEzMTc4MjN9.fESNbJwfreR_3L0YIl9JYVhK-ZO-5kXLtX8pTtzEQhE'
-  const configAuth = {
-    headers: { Authorization: `Bearer ${token}` }
-  }
 
-  const postData = {
-    message: {
-      id: data?.messageId,
-      text: 'Hello world to 29.'
-    },
-    senderProfile: {
-      displayName: 'I am 35',
-      userId: data?.sender,
-      metadata: {
-        blockList: ['1', '23']
-      },
-      avatarFileId: null
-    },
-    receiverProfile: {
-      displayName: 'I am 29',
-      userId: data?.receiver,
-      metadata: {},
-      avatarFileId: null
-    }
-  }
-
+async function getDataFromTransaction (id) {
   try {
-    const sendNoti = await axios.post(
-      'http://localhost:5001/function-firebase-33727/us-central1/sendNotification',
-      postData,
-      configAuth
-    )
-    return sendNoti
-  } catch (error) {
-    console.log(`sendMessageNotification() msg : ${error}`)
-  }
-}
-
-async function getMessageFromTransaction (id) {
-  try {
-    const transactionId = await firestore.collection('transaction').doc(id)
+    const transactionId = firestore.collection('transaction').doc(id)
     const data = await transactionId.get()
     return data.data()
   } catch (error) {
-    console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
+    console.log(`ERRORs getDataFromTransaction() msg : ${error} `)
   }
 }
 
