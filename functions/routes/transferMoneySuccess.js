@@ -11,7 +11,7 @@ const transferMoneySuccess = express()
 transferMoneySuccess.post('/', async (req, res) => {
   try {
     const transferRef = req.body.transferRef
-    
+
     const transaction = await getDataFromTransaction(transferRef)
 
     const { messageId, sender, receiver, amt, currency } = transaction
@@ -24,7 +24,7 @@ transferMoneySuccess.post('/', async (req, res) => {
         .send(
           'Request failed: could not send notification with status code 404'
         )
-      
+
     const createSlip = {
       amount: amt,
       currency: currency,
@@ -32,7 +32,7 @@ transferMoneySuccess.post('/', async (req, res) => {
       receiver: receiver,
       time: 1,
       transferRef: transferRef,
-      note : 1 || ''
+      note: 1 || ''
     }
 
     res.send(createSlip)
@@ -74,7 +74,6 @@ async function updateMessageStatus (id) {
   }
 }
 
-
 async function getDataFromTransaction (id) {
   try {
     const transactionId = firestore.collection('transaction').doc(id)
@@ -86,3 +85,43 @@ async function getDataFromTransaction (id) {
 }
 
 exports.transferMoneySuccess = builderFunction.onRequest(transferMoneySuccess)
+
+/**
+  * 1. Create Request
+  * - สร้างฝั่ง asc + เรียกใช้ clound function สร้าง transferRef ใน Firebase
+  *  โครงสร้างข้อมูล
+  *   - asc = {
+        message: {
+          id: "string",
+          type: "transfer",
+          data: {
+            text: "backend ทำ function convert ให้"
+          },
+          metadata: {
+            status: "สถานะของ transaction (paid, request, cancle)",
+            amount: "string",
+            senderNote: "string",
+            receiverNote: "string"
+          }
+        }
+      }
+
+      *จริง ๆ แล้วเราใช้แค่ messageId ? แล้วไปอัพเดตข้อมูลทั้งหมดผ่าน asc 
+      * สลับ ID sender & receiver ตาม action
+      - Firebase = {
+        messageId: "string",
+        timestamp: "string",
+        amount: "string",
+        senderId: "string",
+        receiverId: "string",
+        currency : "string",
+        senderNote: "string",
+      }
+
+    2. Transfer Success
+    - trigger ผ่านทาง pub/sub true
+      โครงสร้างข้อมูลที่คาดการณ์
+       - body = {
+         transferRef: "id transferRef ใน Firebase"
+       }   
+  */
