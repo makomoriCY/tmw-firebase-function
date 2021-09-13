@@ -3,39 +3,44 @@ const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
 
-const firebase = require('../db')
-const firestore = firebase.firestore()
-
 const transferMoneySuccess = express()
 
 transferMoneySuccess.post('/', async (req, res) => {
   try {
-    const transferRef = req.body.transferRef
+    const {
+      type,
+      messageId,
+      amount,
+      currency,
+      timestamp,
+      senderProfile,
+      receiverProfile,
+      note
+    } = req.body
 
-    const transaction = await getDataFromTransaction(transferRef)
-
-    const { messageId, sender, receiver, amt, currency } = transaction
-
-    const updateMessage = await updateMessageStatus(messageId)
-
-    if (updateMessage.metadata.status !== 'paid')
-      return res
-        .status(404)
-        .send(
-          'Request failed: could not send notification with status code 404'
-        )
-
-    const createSlip = {
-      amount: amt,
-      currency: currency,
-      sender: sender,
-      receiver: receiver,
-      time: 1,
-      transferRef: transferRef,
-      note: 1 || ''
+    if (type === 'request') {
+      const updateTransfer = await updateMessageStatus(messageId)
+      if (!updateTransfer) return res.status(404).send('Request failed')
     }
 
-    res.send(createSlip)
+    await createChatRoom({
+      senderProfile: senderProfile,
+      receiverProfile: receiverProfile
+    })
+
+    const reponse = {
+      type: type,
+      note: note,
+      amount: amount,
+      currency: currency,
+      timestamp: timestamp,
+      messageId: messageId,
+      transferId:transferId,
+      senderProfile: senderProfile,
+      receiverProfile: receiverProfile
+    }
+
+    return res.send(reponse)
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
     res.status(500).send('Request failed')
@@ -48,7 +53,6 @@ async function updateMessageStatus (id) {
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-  // ถามแม็กเรื่อง metadata.status
   const postData = {
     message: {
       id: id,
@@ -67,61 +71,24 @@ async function updateMessageStatus (id) {
       postData,
       configAuth
     )
-    return updateMsg
+    return updateMsg.data
   } catch (error) {
     console.log(`updateMessageStatus() msg : ${error}`)
-    console.log(error.response.data)
+    // console.log(error.response.data)
   }
 }
 
-async function getDataFromTransaction (id) {
+async function createChatRoom ({ senderProfile, receiverProfile }) {
   try {
-    const transactionId = firestore.collection('transaction').doc(id)
-    const data = await transactionId.get()
-    return data.data()
+    const postData = { senderProfile, receiverProfile }
+    const createChat = await axios.post(
+      'http://localhost:5001/function-firebase-33727/us-central1/createChatRoom',
+      postData
+    )
+    return createChat.data
   } catch (error) {
-    console.log(`ERRORs getDataFromTransaction() msg : ${error} `)
+    console.log(`createChatRoom() msg : ${error}`)
   }
 }
 
 exports.transferMoneySuccess = builderFunction.onRequest(transferMoneySuccess)
-
-/**
-  * 1. Create Request
-  * - สร้างฝั่ง asc + เรียกใช้ clound function สร้าง transferRef ใน Firebase
-  *  โครงสร้างข้อมูล
-  *   - asc = {
-        message: {
-          id: "string",
-          type: "transfer",
-          data: {
-            text: "backend ทำ function convert ให้"
-          },
-          metadata: {
-            status: "สถานะของ transaction (paid, request, cancle)",
-            amount: "string",
-            senderNote: "string",
-            receiverNote: "string"
-          }
-        }
-      }
-
-      *จริง ๆ แล้วเราใช้แค่ messageId ? แล้วไปอัพเดตข้อมูลทั้งหมดผ่าน asc 
-      * สลับ ID sender & receiver ตาม action
-      - Firebase = {
-        messageId: "string",
-        timestamp: "string",
-        amount: "string",
-        senderId: "string",
-        receiverId: "string",
-        currency : "string",
-        senderNote: "string",
-      }
-
-    2. Transfer Success
-    - trigger ผ่านทาง pub/sub true
-      โครงสร้างข้อมูลที่คาดการณ์
-       - body = {
-         transferRef: "id transferRef ใน Firebase"
-       }   
-  */
