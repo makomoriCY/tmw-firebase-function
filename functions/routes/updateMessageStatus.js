@@ -4,20 +4,13 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
-const firebase = require('../db')
-const firestore = firebase.firestore()
-
 const updateMessageStatus = express()
 
 updateMessageStatus.put('/', async (req, res) => {
   try {
     const { message, updateToStatus } = req.body
 
-    let searchMesseage
-    updateToStatus === 'paid'
-      ? (searchMesseage = await getMessageFromTransaction(message?.id))
-      : (searchMesseage = await getMessageFromAmity(message?.id))
-    console.log({ searchMesseage })
+    const searchMesseage = await getMessageFromAmity(message?.id)
     if (!searchMesseage) {
       console.log('ERRORs message not found', message?.id)
       res.status(404).json({
@@ -58,16 +51,6 @@ updateMessageStatus.put('/', async (req, res) => {
   }
 })
 
-async function getMessageFromTransaction (id) {
-  try {
-    const transactionId = await firestore.collection('transaction').doc(id)
-    const data = await transactionId.get()
-    return data.data()?.messageId
-  } catch (error) {
-    console.log(`ERRORs getMessageFromTransaction() msg : ${error} `)
-  }
-}
-
 async function getMessageFromAmity (id) {
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -91,7 +74,7 @@ async function updateMessage ({ id, status }) {
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-  // รอคุยเรื่อง structure (status, data.text)
+
   const updateData = {
     data: {
       text: status.toString()
