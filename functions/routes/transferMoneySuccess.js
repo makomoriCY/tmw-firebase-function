@@ -36,12 +36,12 @@ transferMoneySuccess.post('/', async (req, res) => {
       if (!updateTransfer) return res.status(404).send('Cannot update message')
     }
 
-    const createChat = await createChatRoom({
+    const checkUser = await checkUserMutuality({
       senderProfile: senderProfile,
       receiverProfile: receiverProfile
     })
 
-    if (!createChat) return res.status(404).send('Request failed')
+    if (!checkUser) return res.status(404).send('Request failed')
 
     return res.send(reponse)
   } catch (error) {
@@ -81,16 +81,16 @@ async function updateMessageStatus (id) {
   }
 }
 
-async function createChatRoom ({ senderProfile, receiverProfile }) {
+async function checkUserMutuality ({ senderProfile, receiverProfile }) {
   try {
     const postData = { senderProfile, receiverProfile }
-    const createChat = await axios.post(
-      'http://localhost:5001/function-firebase-33727/us-central1/createChatRoom',
+    const checkUserMutuality = await axios.post(
+      'http://localhost:5001/function-firebase-33727/us-central1/checkUserMutuality',
       postData
     )
-    return createChat.data
+    return checkUserMutuality.data
   } catch (error) {
-    console.log(`createChatRoom() msg : ${error}`)
+    console.log(`checkUserMutuality() msg : ${error}`)
   }
 }
 
