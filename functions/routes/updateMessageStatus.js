@@ -76,8 +76,8 @@ async function updateMessage ({ id, status }) {
   }
 
   const updateData = {
-    data: {
-      text: status.toString()
+    data: { 
+      text: status
     }
   }
 
