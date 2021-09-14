@@ -4,9 +4,9 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
-const createChatRoom = express()
+const checkUserMutuality = express()
 
-createChatRoom.post('/', async (req, res) => {
+checkUserMutuality.post('/', async (req, res) => {
   try {
     const { senderProfile, receiverProfile } = req.body
     const senderBlockList = senderProfile?.metadata?.blockList
@@ -57,7 +57,7 @@ createChatRoom.post('/', async (req, res) => {
 
     res.send(response)
   } catch (error) {
-    console.log(`ERRORs in createChatRoom function: ${error}`)
+    console.log(`ERRORs in checkUserMutuality function: ${error}`)
     console.log('Sender: ', req.body?.senderProfile?.userId)
     console.log('Receiver: ', req.body?.receiverProfile?.userId)
   }
@@ -141,4 +141,4 @@ async function checkIsFriend ({ senderId, receiverId }) {
   return isFriend
 }
 
-exports.createChatRoom = builderFunction.onRequest(createChatRoom)
+exports.checkUserMutuality = builderFunction.onRequest(checkUserMutuality)

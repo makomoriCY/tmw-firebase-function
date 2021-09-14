@@ -1,9 +1,9 @@
 const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 
-const createChatRoom = require('./routes/createChatRoom')
-exports.createChatRoom = builderFunction.onRequest(
-  createChatRoom.createChatRoom
+const checkUserMutuality = require('./routes/checkUserMutuality')
+exports.checkUserMutuality = builderFunction.onRequest(
+  checkUserMutuality.checkUserMutuality
 )
 
 const getBadWords = require('./routes/getBadWords')
