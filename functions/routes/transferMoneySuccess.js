@@ -43,6 +43,8 @@ transferMoneySuccess.post('/', async (req, res) => {
 
     if (!checkUser) return res.status(404).send('Request failed')
 
+    // สร้าง channel + msg
+
     return res.send(reponse)
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
