@@ -9,24 +9,15 @@ transferMoneySuccess.post('/', async (req, res) => {
   try {
     const {
       type,
-      messageId,
+      note,
       amount,
       currency,
       timestamp,
+      messageId,
+      transferId,
       senderProfile,
-      receiverProfile,
-      note
+      receiverProfile
     } = req.body
-
-    if (type === 'request') {
-      const updateTransfer = await updateMessageStatus(messageId)
-      if (!updateTransfer) return res.status(404).send('Request failed')
-    }
-
-    await createChatRoom({
-      senderProfile: senderProfile,
-      receiverProfile: receiverProfile
-    })
 
     const reponse = {
       type: type,
@@ -35,10 +26,22 @@ transferMoneySuccess.post('/', async (req, res) => {
       currency: currency,
       timestamp: timestamp,
       messageId: messageId,
-      transferId:transferId,
+      transferId: transferId,
       senderProfile: senderProfile,
       receiverProfile: receiverProfile
     }
+
+    if (type === 'request') {
+      const updateTransfer = await updateMessageStatus(messageId)
+      if (!updateTransfer) return res.status(404).send('Cannot update message')
+    }
+
+    const createChat = await createChatRoom({
+      senderProfile: senderProfile,
+      receiverProfile: receiverProfile
+    })
+
+    if (!createChat) return res.status(404).send('Request failed')
 
     return res.send(reponse)
   } catch (error) {
