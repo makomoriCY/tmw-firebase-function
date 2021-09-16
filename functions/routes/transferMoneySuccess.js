@@ -33,6 +33,7 @@ transferMoneySuccess.post('/', async (req, res) => {
 
     if (type === 'request') {
       const updateTransfer = await updateMessageStatus(messageId)
+      console.log('updateTransfer',updateTransfer)
       if (!updateTransfer) return res.status(404).send('Cannot update message')
     }
 
@@ -40,6 +41,7 @@ transferMoneySuccess.post('/', async (req, res) => {
       senderProfile: senderProfile,
       receiverProfile: receiverProfile
     })
+    console.log('checkUser',checkUser)
 
     if (!checkUser) return res.status(404).send('Request failed')
 
@@ -99,12 +101,12 @@ async function updateMessageStatus (id) {
   }
 
   try {
-    const updateMsg = await axios.put(
+    const { data } = await axios.put(
       'http://localhost:5001/function-firebase-33727/us-central1/updateMessageStatus',
       postData,
       configAuth
     )
-    return updateMsg.data
+    return data
   } catch (error) {
     console.log(`updateMessageStatus() msg : ${error}`)
     // console.log(error.response.data)
@@ -114,11 +116,11 @@ async function updateMessageStatus (id) {
 async function checkUserMutuality ({ senderProfile, receiverProfile }) {
   try {
     const postData = { senderProfile, receiverProfile }
-    const checkUserMutuality = await axios.post(
+    const { data } = await axios.post(
       'http://localhost:5001/function-firebase-33727/us-central1/checkUserMutuality',
       postData
     )
-    return checkUserMutuality.data
+    return data
   } catch (error) {
     console.log(`checkUserMutuality() msg : ${error}`)
   }

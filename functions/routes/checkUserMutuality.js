@@ -102,12 +102,12 @@ async function registerUser (user) {
   }
 
   try {
-    const register = await axios.post(
+    const { data } = await axios.post(
       `${process.env.PROD_URL}/v3/sessions`,
       postData,
       configKeys
     )
-    return register.data
+    return data
   } catch (error) {
     console.log(`ERRORs in registerUser function : ${error}`)
   }
