@@ -2,6 +2,7 @@ const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
+require('dotenv').config()
 
 const transferMoneySuccess = express()
 
@@ -33,58 +34,96 @@ transferMoneySuccess.post('/', async (req, res) => {
 
     if (type === 'request') {
       const updateTransfer = await updateMessageStatus(messageId)
-      console.log('updateTransfer',updateTransfer)
+      console.log('updateTransfer', updateTransfer)
       if (!updateTransfer) return res.status(404).send('Cannot update message')
     }
 
-    const checkUser = await checkUserMutuality({
-      senderProfile: senderProfile,
-      receiverProfile: receiverProfile
+    // const checkUser = await checkUserMutuality({
+    //   senderProfile: senderProfile,
+    //   receiverProfile: receiverProfile
+    // })
+    // console.log('checkUser', checkUser)
+    // if (!checkUser) return res.status(404).send('Request failed')
+
+    const channelId = await createConversation(receiverProfile?.userId)
+
+    const sendSlip = await createSlip({
+      channelId: channelId,
+      reponse: reponse
     })
-    console.log('checkUser',checkUser)
 
-    if (!checkUser) return res.status(404).send('Request failed')
+    if (!sendSlip) return res.status(404).send('Cannot create slip')
 
-    // สร้าง channel + msg
-
-    return res.send(reponse)
+    return res.send('Send slip successfully')
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
     res.status(500).send('Request failed')
   }
 })
 
-async function createChannel ({senderId, receiverId}) {
+async function createSlip ({ channelId, reponse }) {
   const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4NjE2ZjJlOWRiYWNlNDQwMWVhMzE0NTdjYTcwNDUzNjBjZDliODM0ZjAyMTMwYzQ0OTVjMDkyNWIzMDIwZTRmNTQyMzY1NTc1NzUyMzljMjc4ZmE3NmUzOTA5NzU2MWE5NTg1ZTUxZjg5MWMyZWQ5MTA1YTY0MzM5ZGEzNDNjYjAxZWRkOTYwMzgxM2VlMTM5NGVmYzQ2N2RhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxNzY0NDI2LCJleHAiOjE2NjMzMDA0MjZ9.CGYc3uC_bIAxgwew6HZLSsLVNyUYWDugkxGtNSe__S8'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
   const postData = {
-    channelId: `${senderId}-${receiverId}`,
-    type: 'community',
-    displayName: `${senderId}-${receiverId}`,
-    metadata: {},
-    tags: ['string'],
-    userIds: receiverId
+    channelId: channelId,
+    type: 'text',
+    data: {
+      text: reponse.note
+    },
+    metadata: {
+      amount: reponse.amount,
+      currency: reponse.currency,
+      timestamp: reponse.timestamp,
+      messageId: reponse.messageId,
+      senderProfile: reponse.senderProfile,
+      receiverProfile: reponse.receiverProfile
+    },
+    tags: ['transferSlip']
   }
 
   try {
-    const channel = await axios.post(
-      'https://api.amity.co/api/v3/channels',
+    const { data } = await axios.post(
+      `${process.env.PROD_URL}/v3/messages`,
       postData,
       configAuth
     )
-    return channel.data[0].channelId
+    return data
   } catch (error) {
-    console.log(`createChannel() msg : ${error}`)
-    // console.log(error.response.data)
+    console.log(`createSlip() msg : ${error}`)
+  }
+}
+
+async function createConversation (receiverId) {
+  const token =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
+  const configAuth = {
+    headers: { Authorization: `Bearer ${token}` }
+  }
+  const postData = {
+    userIds: [receiverId],
+    isDistinct: true,
+    displayName: receiverId,
+    metadata: {}
+  }
+
+  try {
+    const convo = await axios.post(
+      `${process.env.PROD_URL}/v3/channels/conversation`,
+      postData,
+      configAuth
+    )
+    return convo.data?.channels[0]?.channelId
+  } catch (error) {
+    console.log(`createConvosation() msg : ${error}`)
   }
 }
 
 async function updateMessageStatus (id) {
   const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4M2MzYzdkOWRiOWNhNDkwNGI4NmYxMzcwYTQ1MzUzNjE5Yzk5ODMxMDAzMTA1NTQyYzljOTk3MGE2NzI0ZTRmNjE4MzAwZDc0MjU3ZmM3NzU4OWE0NjI2OTVmMjc2MGZhNTkwOTU4ZmI5M2NiZWU5ZTU2ZjA0ZjMzZGI2NDM0YmQxOGQ3OTE1Mjg3NjllMzZmMWFhYzQ0NzlhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwN2FiMjMwMmI1MDliOTNiNTA4YTg1YmI0MGMyNWNjNmY1ZWU3MmUyYzM2MzIxZTk1IiwiaWF0IjoxNjI5NzgxODIzLCJleHAiOjE2NjEzMTc4MjN9.fESNbJwfreR_3L0YIl9JYVhK-ZO-5kXLtX8pTtzEQhE'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
