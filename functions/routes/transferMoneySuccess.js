@@ -2,53 +2,133 @@ const functions = require('firebase-functions')
 const builderFunction = functions.region('us-central1').https
 const express = require('express')
 const axios = require('axios')
-
-const firebase = require('../db')
-const firestore = firebase.firestore()
+require('dotenv').config()
 
 const transferMoneySuccess = express()
 
 transferMoneySuccess.post('/', async (req, res) => {
   try {
-    const transferRef = req.body.transferRef
+    const {
+      type,
+      note,
+      amount,
+      currency,
+      timestamp,
+      messageId,
+      transferId,
+      senderProfile,
+      receiverProfile
+    } = req.body
 
-    const transaction = await getDataFromTransaction(transferRef)
-
-    const { messageId, sender, receiver, amt, currency } = transaction
-
-    const updateMessage = await updateMessageStatus(messageId)
-
-    if (updateMessage.metadata.status !== 'paid')
-      return res
-        .status(404)
-        .send(
-          'Request failed: could not send notification with status code 404'
-        )
-
-    const createSlip = {
-      amount: amt,
+    const reponse = {
+      type: type,
+      note: note,
+      amount: amount,
       currency: currency,
-      sender: sender,
-      receiver: receiver,
-      time: 1,
-      transferRef: transferRef,
-      note: 1 || ''
+      timestamp: timestamp,
+      messageId: messageId,
+      transferId: transferId,
+      senderProfile: senderProfile,
+      receiverProfile: receiverProfile
     }
 
-    res.send(createSlip)
+    if (type === 'request') {
+      const updateTransfer = await updateMessageStatus(messageId)
+      console.log('updateTransfer', updateTransfer)
+      if (!updateTransfer) return res.status(404).send('Cannot update message')
+    }
+
+    // รอข้อมูลจาก true
+    // const checkUser = await checkUserMutuality({
+    //   senderProfile: senderProfile,
+    //   receiverProfile: receiverProfile
+    // })
+    // console.log('checkUser', checkUser)
+    // if (!checkUser) return res.status(404).send('Request failed')
+
+    const channelId = await createConversation(receiverProfile?.userId)
+    if (!channelId) return res.status(404).send('Cannot create conversation')
+
+    const sendSlip = await createSlip({
+      channelId: channelId,
+      reponse: reponse
+    })
+
+    if (!sendSlip) return res.status(404).send('Cannot create slip')
+
+    return res.send('Send slip successfully')
   } catch (error) {
     console.log(`ERRORs transferMoneySuccess function : ${error}`)
     res.status(500).send('Request failed')
   }
 })
 
-async function updateMessageStatus (id) {
+async function createSlip ({ channelId, reponse }) {
   const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjBmZGFlNGI4M2MzYzdkOWRiOWNhNDkwNGI4NmYxMzcwYTQ1MzUzNjE5Yzk5ODMxMDAzMTA1NTQyYzljOTk3MGE2NzI0ZTRmNjE4MzAwZDc0MjU3ZmM3NzU4OWE0NjI2OTVmMjc2MGZhNTkwOTU4ZmI5M2NiZWU5ZTU2ZjA0ZjMzZGI2NDM0YmQxOGQ3OTE1Mjg3NjllMzZmMWFhYzQ0NzlhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwN2FiMjMwMmI1MDliOTNiNTA4YTg1YmI0MGMyNWNjNmY1ZWU3MmUyYzM2MzIxZTk1IiwiaWF0IjoxNjI5NzgxODIzLCJleHAiOjE2NjEzMTc4MjN9.fESNbJwfreR_3L0YIl9JYVhK-ZO-5kXLtX8pTtzEQhE'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
   }
-  // ถามแม็กเรื่อง metadata.status
+  const postData = {
+    channelId: channelId,
+    type: 'text',
+    data: {
+      text: reponse.note
+    },
+    metadata: {
+      amount: reponse.amount,
+      currency: reponse.currency,
+      timestamp: reponse.timestamp,
+      messageId: reponse.messageId,
+      senderProfile: reponse.senderProfile,
+      receiverProfile: reponse.receiverProfile
+    },
+    tags: ['transferSlip']
+  }
+
+  try {
+    const { data } = await axios.post(
+      `${process.env.PROD_URL}/v3/messages`,
+      postData,
+      configAuth
+    )
+    return data
+  } catch (error) {
+    console.log(`createSlip() msg : ${error}`)
+  }
+}
+
+async function createConversation (receiverId) {
+  const token =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
+  const configAuth = {
+    headers: { Authorization: `Bearer ${token}` }
+  }
+  const postData = {
+    userIds: [receiverId],
+    isDistinct: true,
+    displayName: receiverId,
+    metadata: {}
+  }
+
+  try {
+    const convo = await axios.post(
+      `${process.env.PROD_URL}/v3/channels/conversation`,
+      postData,
+      configAuth
+    )
+    return convo.data?.channels[0]?.channelId
+  } catch (error) {
+    console.log(`createConvosation() msg : ${error}`)
+  }
+}
+
+async function updateMessageStatus (id) {
+  const token =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjU4ODVlYWJlNjE2ZTI0OWZiYzlmNGY1NmI2NmU0MDdjYTQ1NTUxMzA5OWNlZDAxMjA1MTM1YTEzYzVjYzk1MGM2NzI1ZTFmNjE2MzMwYzdkNzU3OTkxMmY4YWYwNjk2YTVkNzQ2NmE1MGU1ZTVjYWFjN2MzZWY5MTBmZjU0MjNmZGE2MjMxYjExZWQxOTM1M2QwM2VlMzM4MTlmYzQxN2NhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzllNzY3N2I1NGM2OTZlMTA5YTkwY2U0NWM3NTllM2Y1OWIzN2EyYTMwMzMxZTk1IiwiaWF0IjoxNjMxODU4NjU5LCJleHAiOjE2NjMzOTQ2NTl9.TrUDDlTAAG_Z2j-nV3HeEB7WEEQdpwExT7DACUSkpzo'
+  const configAuth = {
+    headers: { Authorization: `Bearer ${token}` }
+  }
   const postData = {
     message: {
       id: id,
@@ -62,66 +142,29 @@ async function updateMessageStatus (id) {
   }
 
   try {
-    const updateMsg = await axios.put(
+    const { data } = await axios.put(
       'http://localhost:5001/function-firebase-33727/us-central1/updateMessageStatus',
       postData,
       configAuth
     )
-    return updateMsg
+    return data
   } catch (error) {
     console.log(`updateMessageStatus() msg : ${error}`)
-    console.log(error.response.data)
+    // console.log(error.response.data)
   }
 }
 
-async function getDataFromTransaction (id) {
+async function checkUserMutuality ({ senderProfile, receiverProfile }) {
   try {
-    const transactionId = firestore.collection('transaction').doc(id)
-    const data = await transactionId.get()
-    return data.data()
+    const postData = { senderProfile, receiverProfile }
+    const { data } = await axios.post(
+      'http://localhost:5001/function-firebase-33727/us-central1/checkUserMutuality',
+      postData
+    )
+    return data
   } catch (error) {
-    console.log(`ERRORs getDataFromTransaction() msg : ${error} `)
+    console.log(`checkUserMutuality() msg : ${error}`)
   }
 }
 
 exports.transferMoneySuccess = builderFunction.onRequest(transferMoneySuccess)
-
-/**
-  * 1. Create Request
-  * - สร้างฝั่ง asc + เรียกใช้ clound function สร้าง transferRef ใน Firebase
-  *  โครงสร้างข้อมูล
-  *   - asc = {
-        message: {
-          id: "string",
-          type: "transfer",
-          data: {
-            text: "backend ทำ function convert ให้"
-          },
-          metadata: {
-            status: "สถานะของ transaction (paid, request, cancle)",
-            amount: "string",
-            senderNote: "string",
-            receiverNote: "string"
-          }
-        }
-      }
-
-      *จริง ๆ แล้วเราใช้แค่ messageId ? แล้วไปอัพเดตข้อมูลทั้งหมดผ่าน asc 
-      * สลับ ID sender & receiver ตาม action
-      - Firebase = {
-        messageId: "string",
-        timestamp: "string",
-        amount: "string",
-        senderId: "string",
-        receiverId: "string",
-        currency : "string",
-        senderNote: "string",
-      }
-
-    2. Transfer Success
-    - trigger ผ่านทาง pub/sub true
-      โครงสร้างข้อมูลที่คาดการณ์
-       - body = {
-         transferRef: "id transferRef ใน Firebase"
-       }   
-  */
