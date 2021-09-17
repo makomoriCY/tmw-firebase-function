@@ -38,6 +38,7 @@ transferMoneySuccess.post('/', async (req, res) => {
       if (!updateTransfer) return res.status(404).send('Cannot update message')
     }
 
+    // รอข้อมูลจาก true
     // const checkUser = await checkUserMutuality({
     //   senderProfile: senderProfile,
     //   receiverProfile: receiverProfile
@@ -46,6 +47,7 @@ transferMoneySuccess.post('/', async (req, res) => {
     // if (!checkUser) return res.status(404).send('Request failed')
 
     const channelId = await createConversation(receiverProfile?.userId)
+    if (!channelId) return res.status(404).send('Cannot create conversation')
 
     const sendSlip = await createSlip({
       channelId: channelId,
