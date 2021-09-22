@@ -43,3 +43,8 @@ const transferMoney = require('./version-firestore/transferMoney')
 exports.transferMoney = builderFunction.onRequest(
   transferMoney.transferMoney
 )
+
+const checkIsBlockFriend = require('./routes/checkIsBlockFriend')
+exports.checkIsBlockFriend = builderFunction.onRequest(
+  checkIsBlockFriend.checkIsBlockFriend
+)
