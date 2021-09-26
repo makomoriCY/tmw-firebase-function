@@ -43,3 +43,23 @@ const transferMoney = require('./version-firestore/transferMoney')
 exports.transferMoney = builderFunction.onRequest(
   transferMoney.transferMoney
 )
+
+const checkIsBlockFriend = require('./routes/checkIsBlockFriend')
+exports.checkIsBlockFriend = builderFunction.onRequest(
+  checkIsBlockFriend.checkIsBlockFriend
+)
+
+const addBlockList = require('./routes/addBlockList')
+exports.addBlockList = builderFunction.onRequest(
+  addBlockList.addBlockList
+)
+
+const removeFromBlockList = require('./routes/removeFromBlockList')
+exports.removeFromBlockList = builderFunction.onRequest(
+  removeFromBlockList.removeFromBlockList
+)
+
+const getBlockList = require('./routes/getBlockList')
+exports.getBlockList = builderFunction.onRequest(
+  getBlockList.getBlockList
+)
