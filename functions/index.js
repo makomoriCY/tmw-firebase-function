@@ -53,3 +53,8 @@ const addBlockList = require('./routes/addBlockList')
 exports.addBlockList = builderFunction.onRequest(
   addBlockList.addBlockList
 )
+
+const removeFromBlockList = require('./routes/removeFromBlockList')
+exports.removeFromBlockList = builderFunction.onRequest(
+  removeFromBlockList.removeFromBlockList
+)

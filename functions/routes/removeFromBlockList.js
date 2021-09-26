@@ -4,39 +4,28 @@ const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
-const addBlockList = express()
+const removeFromBlockList = express()
 
-addBlockList.post('/', async (req, res) => {
+removeFromBlockList.delete('/', async (req, res) => {
   try {
     const { userId, bannedId } = req.body
 
     const userProfile = await getProfileFromAmity(userId)
-    
+
     if (!userProfile) return res.status(404).send('User not found')
 
     let blockList = userProfile?.metadata?.blockList
 
-    if (!blockList) {
-      const list = [bannedId]
-
-      const data = await addToBlockList({ id: userId, list: list })
-      if (!data) return res.status(404).send('Errors')
-
-      return res.send('Block Successfuly!')
-    }
-
-    const checkUserExist = blockList?.some(user => user === bannedId)
+    if (!blockList) return res.send('Block list not found')
     
-    if(checkUserExist) return res.send('Block Successfuly!!')
+    const list = blockList.filter(user => user !== bannedId)
 
-    blockList.push(bannedId)
-
-    const data = await addToBlockList({ id: userId, list: blockList })
+    const data = await removeUser({ id: userId, list: list })
     if (!data) return res.status(404).send('Errors')
 
-    return res.send('Block Successfuly!')
+    return res.send('Unblocked Successfuly!')
   } catch (error) {
-    console.log(`error in addBlockList function: ${error}`)
+    console.log(`error in removeFromBlockList function: ${error}`)
     res.status(500)
   }
 })
@@ -59,7 +48,7 @@ async function getProfileFromAmity (id) {
   }
 }
 
-async function addToBlockList ({ id, list }) {
+async function removeUser ({ id, list }) {
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }
@@ -81,8 +70,8 @@ async function addToBlockList ({ id, list }) {
 
     return data
   } catch (error) {
-    console.log(`ERRORs in addToBlockList : ${error}`)
+    console.log(`ERRORs in removeUser : ${error}`)
   }
 }
 
-exports.addBlockList = builderFunction.onRequest(addBlockList)
+exports.removeFromBlockList = builderFunction.onRequest(removeFromBlockList)

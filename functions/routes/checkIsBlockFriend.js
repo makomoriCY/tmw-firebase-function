@@ -11,6 +11,7 @@ checkIsBlockFriend.get('/', async (req, res) => {
     const { userId, otherId } = req.body
     
     const userProfile = await getProfileFromAmity(userId)
+    
     if(!userProfile) return res.status(404).send('User not found')
     // รอถามแม็กว่าเช็กคนเดียวหรือทั้งสองคน
     const isBlock = userProfile?.metadata?.blockList?.some(
