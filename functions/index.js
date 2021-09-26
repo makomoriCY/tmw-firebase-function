@@ -58,3 +58,8 @@ const removeFromBlockList = require('./routes/removeFromBlockList')
 exports.removeFromBlockList = builderFunction.onRequest(
   removeFromBlockList.removeFromBlockList
 )
+
+const getBlockList = require('./routes/getBlockList')
+exports.getBlockList = builderFunction.onRequest(
+  getBlockList.getBlockList
+)
