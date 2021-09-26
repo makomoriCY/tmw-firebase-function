@@ -41,7 +41,7 @@ checkUserMutuality.post('/', async (req, res) => {
 
     // find sender user blocked
     const isSenderBlockReceiver = senderBlockList?.some(
-      user => user === receiverTrueProfile?.users?.userId
+      user => user === receiverTrueProfile?.users?.userId 
     )
 
     const response = {
@@ -81,7 +81,6 @@ async function getProfileFromAmity (id) {
   }
 }
 
-// register user
 async function registerUser (user) {
   const configKeys = {
     headers: {
