@@ -48,3 +48,8 @@ const checkIsBlockFriend = require('./routes/checkIsBlockFriend')
 exports.checkIsBlockFriend = builderFunction.onRequest(
   checkIsBlockFriend.checkIsBlockFriend
 )
+
+const addBlockList = require('./routes/addBlockList')
+exports.addBlockList = builderFunction.onRequest(
+  addBlockList.addBlockList
+)
