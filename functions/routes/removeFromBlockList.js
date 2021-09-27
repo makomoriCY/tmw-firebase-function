@@ -31,6 +31,7 @@ removeFromBlockList.delete('/', async (req, res) => {
 })
 
 async function getProfileFromAmity (id) {
+  // use token user
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }

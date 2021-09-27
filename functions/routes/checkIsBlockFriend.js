@@ -13,11 +13,11 @@ checkIsBlockFriend.get('/', async (req, res) => {
     const userProfile = await getProfileFromAmity(userId)
     
     if(!userProfile) return res.status(404).send('User not found')
-    // รอถามแม็กว่าเช็กคนเดียวหรือทั้งสองคน
+    
     const isBlock = userProfile?.metadata?.blockList?.some(
       user => user === otherId
     )
-    // รอถามแม็กเรื่องคืนค่า true กับ false
+    
     !isBlock ? res.send(false) : res.send(isBlock)
 
   } catch (error) {
@@ -26,6 +26,7 @@ checkIsBlockFriend.get('/', async (req, res) => {
 })
 
 async function getProfileFromAmity (id) {
+  // use token user
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }

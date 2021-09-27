@@ -19,6 +19,7 @@ getBlockList.get('/', async (req, res) => {
   }
 
   async function getProfileFromAmity (id) {
+    // use token user
     const token = process.env.ADMIN_TOKEN
     const configAuth = {
       headers: { Authorization: `Bearer ${token}` }
@@ -34,13 +35,13 @@ getBlockList.get('/', async (req, res) => {
     } catch (error) {
       console.log(`ERRORs in getAmityProfile id: ${id} : ${error}`)
       return res
-        .status(ConvertStatusCode(error.response.data.code))
+        .status(convertStatusCode(error.response.data.code))
         .send(error.response.data.message)
     }
   }
 })
 
-function ConvertStatusCode (status) {
+function convertStatusCode (status) {
   let code
   switch (status) {
     case 400400:
