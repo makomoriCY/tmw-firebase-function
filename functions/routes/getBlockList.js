@@ -9,9 +9,9 @@ const getBlockList = express()
 getBlockList.get('/', async (req, res) => {
   try {
     const { userId } = req.body
-
-    const list = (await getProfileFromAmity(userId)) || []
-
+    console.log('userId', userId)
+    const list = await getProfileFromAmity(userId) || []
+    console.log('list', list)
     return res.send(list)
   } catch (error) {
     console.log(`error in getBlockList function: ${error}`)

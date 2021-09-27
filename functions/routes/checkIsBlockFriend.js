@@ -9,7 +9,7 @@ const checkIsBlockFriend = express()
 checkIsBlockFriend.get('/', async (req, res) => {
   try {
     const { userId, otherId } = req.body
-    
+    console.log({otherId, userId})
     const userProfile = await getProfileFromAmity(userId)
     
     if(!userProfile) return res.status(404).send('User not found')
@@ -17,6 +17,7 @@ checkIsBlockFriend.get('/', async (req, res) => {
     const isBlock = userProfile?.metadata?.blockList?.some(
       user => user === otherId
     )
+    console.log({userProfile, isBlock})
     
     !isBlock ? res.send(false) : res.send(isBlock)
 
