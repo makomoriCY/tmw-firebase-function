@@ -1,5 +1,5 @@
 const functions = require('firebase-functions')
-const builderFunction = functions.region('us-central1').https
+const builderFunction = functions.region('asia-southeast1').https
 const express = require('express')
 const getBadWords = express()
 require('dotenv').config()
