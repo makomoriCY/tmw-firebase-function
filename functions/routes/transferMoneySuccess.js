@@ -143,7 +143,7 @@ async function updateMessageStatus (id) {
 
   try {
     const { data } = await axios.put(
-      'http://localhost:5001/function-firebase-33727/us-central1/updateMessageStatus',
+      'https://asia-southeast1-truemoney-50567.cloudfunctions.net/updateMessageStatus',
       postData,
       configAuth
     )
@@ -158,7 +158,7 @@ async function checkUserMutuality ({ senderProfile, receiverProfile }) {
   try {
     const postData = { senderProfile, receiverProfile }
     const { data } = await axios.post(
-      'http://localhost:5001/function-firebase-33727/us-central1/checkUserMutuality',
+      'https://asia-southeast1-truemoney-50567.cloudfunctions.net/checkUserMutuality',
       postData
     )
     return data
