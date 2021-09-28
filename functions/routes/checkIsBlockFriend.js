@@ -8,7 +8,7 @@ const checkIsBlockFriend = express()
 
 checkIsBlockFriend.get('/', async (req, res) => {
   try {
-    const { userId, otherId } = req.body
+    const { userId, otherId } = req.query
     console.log({otherId, userId})
     const userProfile = await getProfileFromAmity(userId)
     
