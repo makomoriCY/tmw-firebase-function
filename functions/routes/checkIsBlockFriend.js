@@ -8,8 +8,9 @@ const checkIsBlockFriend = express()
 
 checkIsBlockFriend.get('/', async (req, res) => {
   try {
-    const { userId, otherId } = req.query
-    console.log({otherId, userId})
+    const userId = req.query.userId
+    const otherId = req.query.otherId
+    
     const userProfile = await getProfileFromAmity(userId)
     
     if(!userProfile) return res.status(404).send('User not found')
