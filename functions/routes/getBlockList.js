@@ -6,9 +6,9 @@ require('dotenv').config()
 
 const getBlockList = express()
 
-getBlockList.get('/', async (req, res) => {
+getBlockList.get('/:id', async (req, res) => {
   try {
-    const { userId } = req.body
+    const userId = req.params.id
     console.log('userId', userId)
     const list = await getProfileFromAmity(userId) || []
     console.log('list', list)
