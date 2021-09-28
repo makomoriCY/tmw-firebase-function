@@ -1,5 +1,5 @@
 const functions = require('firebase-functions')
-const builderFunction = functions.region('us-central1').https
+const builderFunction = functions.region('asia-southeast1').https
 const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
@@ -31,6 +31,7 @@ removeFromBlockList.delete('/', async (req, res) => {
 })
 
 async function getProfileFromAmity (id) {
+  // use token user
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }

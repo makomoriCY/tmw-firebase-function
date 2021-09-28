@@ -1,5 +1,5 @@
 const functions = require('firebase-functions')
-const builderFunction = functions.region('us-central1').https
+const builderFunction = functions.region('asia-southeast1').https
 const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
@@ -8,16 +8,18 @@ const checkIsBlockFriend = express()
 
 checkIsBlockFriend.get('/', async (req, res) => {
   try {
-    const { userId, otherId } = req.body
+    const userId = req.query.userId
+    const otherId = req.query.otherId
     
     const userProfile = await getProfileFromAmity(userId)
     
     if(!userProfile) return res.status(404).send('User not found')
-    // รอถามแม็กว่าเช็กคนเดียวหรือทั้งสองคน
+    
     const isBlock = userProfile?.metadata?.blockList?.some(
       user => user === otherId
     )
-    // รอถามแม็กเรื่องคืนค่า true กับ false
+    console.log({userProfile, isBlock})
+    
     !isBlock ? res.send(false) : res.send(isBlock)
 
   } catch (error) {
@@ -26,6 +28,7 @@ checkIsBlockFriend.get('/', async (req, res) => {
 })
 
 async function getProfileFromAmity (id) {
+  // use token user
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
     headers: { Authorization: `Bearer ${token}` }

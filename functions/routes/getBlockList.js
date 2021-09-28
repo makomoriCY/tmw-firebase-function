@@ -1,17 +1,17 @@
 const functions = require('firebase-functions')
-const builderFunction = functions.region('us-central1').https
+const builderFunction = functions.region('asia-southeast1').https
 const express = require('express')
 const axios = require('axios')
 require('dotenv').config()
 
 const getBlockList = express()
 
-getBlockList.get('/', async (req, res) => {
+getBlockList.get('/:id', async (req, res) => {
   try {
-    const { userId } = req.body
-
-    const list = (await getProfileFromAmity(userId)) || []
-
+    const userId = req.params.id
+    
+    const list = await getProfileFromAmity(userId) || []
+    
     return res.send(list)
   } catch (error) {
     console.log(`error in getBlockList function: ${error}`)
@@ -19,6 +19,7 @@ getBlockList.get('/', async (req, res) => {
   }
 
   async function getProfileFromAmity (id) {
+    // use token user
     const token = process.env.ADMIN_TOKEN
     const configAuth = {
       headers: { Authorization: `Bearer ${token}` }
@@ -34,13 +35,13 @@ getBlockList.get('/', async (req, res) => {
     } catch (error) {
       console.log(`ERRORs in getAmityProfile id: ${id} : ${error}`)
       return res
-        .status(ConvertStatusCode(error.response.data.code))
+        .status(convertStatusCode(error.response.data.code))
         .send(error.response.data.message)
     }
   }
 })
 
-function ConvertStatusCode (status) {
+function convertStatusCode (status) {
   let code
   switch (status) {
     case 400400:

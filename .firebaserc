@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "function-firebase-33727"
-  }
+    "default": "truemoney-50567",
+    "dev": "truemoney-50567"
+  },
+  "targets": {}
 }
