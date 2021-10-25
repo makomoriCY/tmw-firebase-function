@@ -45,7 +45,7 @@ transferMoneySuccess.post('/', async (req, res) => {
     // })
     // console.log('checkUser', checkUser)
     // if (!checkUser) return res.status(404).send('Request failed')
-
+    console.log("555+")
     const channelId = await createConversation(receiverProfile?.userId)
     if (!channelId) return res.status(404).send('Cannot create conversation')
 
