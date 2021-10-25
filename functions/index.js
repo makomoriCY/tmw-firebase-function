@@ -14,15 +14,15 @@ const builderFunction = functions.region('asia-southeast1').https
 //   sendNotification.sendNotification
 // )
 
-// const updateMessageStatus = require('./routes/updateMessageStatus')
-// exports.updateMessageStatus = builderFunction.onRequest(
-//   updateMessageStatus.updateMessageStatus
-// )
+const updateMessageStatus = require('./routes/updateMessageStatus')
+exports.updateMessageStatus = builderFunction.onRequest(
+  updateMessageStatus.updateMessageStatus
+)
 
-// const transferMoneySuccess = require('./routes/transferMoneySuccess')
-// exports.transferMoneySuccess = builderFunction.onRequest(
-//   transferMoneySuccess.transferMoneySuccess
-// )
+const transferMoneySuccess = require('./routes/transferMoneySuccess')
+exports.transferMoneySuccess = builderFunction.onRequest(
+  transferMoneySuccess.transferMoneySuccess
+)
 
 // const createTransaction = require('./version-firestore/createTransaction')
 // exports.createTransaction = builderFunction.onRequest(

@@ -11,12 +11,7 @@ updateMessageStatus.put('/', async (req, res) => {
     const { message, updateToStatus } = req.body
 
     const searchMesseage = await getMessageFromAmity(message?.id)
-    if (!searchMesseage) {
-      console.log('ERRORs message not found', message?.id)
-      res.status(404).json({
-        error: 'Request failed "message not found" with status code 404'
-      })
-    }
+    if (!searchMesseage) return res.status(404).send('Message not found')
 
     const updateStatus = await updateMessage({
       id: searchMesseage,
@@ -24,10 +19,7 @@ updateMessageStatus.put('/', async (req, res) => {
     })
 
     if (!updateStatus) {
-      console.log('ERRORs message not update', message?.id)
-      res.status(404).json({
-        error: 'Request failed "message not update" with status code 404'
-      })
+      return res.status(404).send('message not update')
     } else {
       const { messageId, data } = updateStatus
 
