@@ -7,63 +7,57 @@ require('dotenv').config()
 const checkUserMutuality = express()
 
 checkUserMutuality.post('/', async (req, res) => {
+  const ID_LENGTH = 15
+  const REGEX = new RegExp('^[0-9]+$')
   try {
-    const { senderProfile, receiverProfile } = req.body
-    const senderBlockList = senderProfile?.metadata?.blockList
+    const { owner_id: ownerId, friend_id: friendId } = req.body
 
-    // get profile form amity backend
-    let senderAmityProfile,
-      receiverAmityProfile = {}
+    console.log({ ownerId, friendId })
 
-    senderAmityProfile = await getProfileFromAmity(senderProfile?.userId)
-    receiverAmityProfile = await getProfileFromAmity(receiverProfile?.userId)
+    if (!ownerId || !friendId) return res.status(400).send('parameter require')
 
-    // create amity profile
-    if (!senderAmityProfile) {
-      senderAmityProfile = await registerUser(senderProfile)
-    }
+    if (ownerId?.length !== ID_LENGTH || friendId?.length !== ID_LENGTH)
+      return res.status(400).send('ID parameter length invalid')
 
-    if (!receiverAmityProfile) {
-      receiverAmityProfile = await registerUser(receiverProfile)
-    }
+    if (!REGEX?.test(ownerId) || !REGEX?.test(friendId))
+      return res.status(400).send('ID parameter invalid')
 
-    let senderTrueProfile,
-      receiverTrueProfile = {}
+    const amityProfiles = await getProfileFromAmity(ownerId, friendId)
 
-    senderTrueProfile = await getProfileFromTrue(senderAmityProfile)
-    receiverTrueProfile = await getProfileFromTrue(receiverAmityProfile)
+    if (!amityProfiles) return res.status(404).send('User not found')
 
-    // check friend status from true backend
-    const isFriend = await checkIsFriend({
-      senderId: senderTrueProfile?.users?.userId,
-      receiverId: receiverTrueProfile?.users?.userId
-    })
+    const trueProfiles = await getProfileFromTrue(ownerId, friendId)
 
-    // find sender user blocked
-    const isSenderBlockReceiver = senderBlockList?.some(
-      user => user === receiverTrueProfile?.users?.userId 
-    )
+    console.log({ amityProfiles, trueProfiles })
 
-    const response = {
-      senderProfile: senderTrueProfile?.users,
-      receiverProfile: receiverTrueProfile?.users,
-      friendStatus: isFriend?.isFriend,
-      blockListStatus: isSenderBlockReceiver || false
+    const friendDetails = {
+      owner: {
+        id: amityProfiles.owner.id,
+        displayName: `truemoney-${amityProfiles.owner.displayName}`,
+        inContact: trueProfiles.data.owner.in_contact,
+        inBlocklist: amityProfiles.owner.isOwnerGetBlock,
+        image: trueProfiles.data.owner.images
+      },
+      friend: {
+        id: amityProfiles.friend.id,
+        displayName: `truemoney-${amityProfiles.friend.displayName}`,
+        inContact: trueProfiles.data.friend.in_contact,
+        inBlocklist: amityProfiles.friend.isFriendGetBlock,
+        image: trueProfiles.data.friend.images
+      }
     }
 
     console.log({
-      response
+      friendDetails
     })
 
-    res.send(response)
+    res.send(friendDetails)
   } catch (error) {
     console.log(`ERRORs in checkUserMutuality function: ${error}`)
-    console.log('Sender: ', req.body?.senderProfile?.userId)
-    console.log('Receiver: ', req.body?.receiverProfile?.userId)
   }
 })
 
-async function getProfileFromAmity (id) {
+async function getProfileFromAmity (ownerId, friendId) {
   // use token user
   const token = process.env.ADMIN_TOKEN
   const configAuth = {
@@ -71,74 +65,68 @@ async function getProfileFromAmity (id) {
   }
 
   try {
-    const profileAmity = await axios.get(
-      `${process.env.PROD_URL}/v3/users/${id}`,
+    const ownerProfile = await axios.get(
+      `${process.env.PROD_URL}/v3/users/${ownerId}`,
       configAuth
     )
 
-    return profileAmity.data
-  } catch (error) {
-    console.log(`ERRORs in getAmityProfile id: ${id} : ${error}`)
-  }
-}
-
-async function registerUser (user) {
-  const configKeys = {
-    headers: {
-      'x-api-key': process.env.X_API_KEY
-    }
-  }
-  //#improve: change device to parameter getting from req body
-  const postData = {
-    userId: user?.userId?.toString(),
-    deviceId: 'deviceId_test',
-    deviceInfo: {
-      kind: 'ios',
-      model: 'model_test',
-      sdkVersion: 'sdkVersion_test'
-    },
-    displayName: user?.displayName?.toString(),
-    authToken: 'authToken_test'
-  }
-
-  try {
-    const { data } = await axios.post(
-      `${process.env.PROD_URL}/v3/sessions`,
-      postData,
-      configKeys
+    const friendProfile = await axios.get(
+      `${process.env.PROD_URL}/v3/users/${friendId}`,
+      configAuth
     )
-    return data
+
+    const ownerBlockList = ownerProfile.data.metadata?.blockList
+    const friendBlockList = friendProfile.data.metadata?.blockList
+
+    const isOwnerGetBlock =
+      friendBlockList?.some(user => user === ownerId) || false
+
+    const isFriendGetBlock =
+      ownerBlockList?.some(user => user === friendId) || false
+
+    const response = {
+      owner: {
+        id: ownerId,
+        displayName: ownerProfile.data.users[0].displayName,
+        isOwnerGetBlock
+      },
+      friend: {
+        id: friendId,
+        displayName: friendProfile.data.users[0].displayName,
+        isFriendGetBlock
+      }
+    }
+    return response
   } catch (error) {
-    console.log(`ERRORs in registerUser function : ${error}`)
+    console.log(`ERRORs in getAmityProfile ${error}`)
   }
 }
 
-// get profile from true
-// #improve: Fail case handle
-async function getProfileFromTrue (user) {
+async function getProfileFromTrue (ownerId, friendId) {
   const profile = {
-    users: {
-      updatedAt: `true ${user?.users[0]?.displayName}`,
-      createdAt: `true ${user?.users[0]?.createdAt}`,
-      displayName: `true ${user?.users[0]?.displayName}`,
-      userId: `${user?.users[0]?.userId}`,
-      metadata: {},
-      roles: [],
-      permissions: [],
-      flagCount: 0,
-      hashFlag: null,
-      avatarFileId: null
+    status: {
+      code: '0',
+      message: 'Success'
+    },
+    data: {
+      owner: {
+        tmn_id: 'tmn.10001066599',
+        display_name: 'Owner 1',
+        in_contact: true,
+        images:
+          'https://profile-images-alpha.s3-ap-southeast-1.amazonaws.com/bnk48?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20180703T083450Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3599&X-Amz-Credential=AKIAI6BLITGNNM4VYAUA%2F20180703%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=1d9b720b7adf955cfa9d0f26e506b5d03aa94b31d1ea752a9e87f541d3c09e20'
+      },
+      friend: {
+        tmn_id: 'tmn.10001022033',
+        display_name: 'Friend 1',
+        in_contact: true,
+        images:
+          'https://profile-images-alpha.s3-ap-southeast-1.amazonaws.com/bnk48?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20180703T083450Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3599&X-Amz-Credential=AKIAI6BLITGNNM4VYAUA%2F20180703%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=1d9b720b7adf955cfa9d0f26e506b5d03aa94b31d1ea752a9e87f541d3c09e20'
+      }
     }
   }
-  return profile
-}
 
-// get friend status from true
-async function checkIsFriend ({ senderId, receiverId }) {
-  const isFriend = {
-    isFriend: +senderId > +receiverId ? true : false
-  }
-  return isFriend
+  return profile
 }
 
 exports.checkUserMutuality = builderFunction.onRequest(checkUserMutuality)
