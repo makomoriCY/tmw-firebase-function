@@ -1,6 +1,11 @@
 const functions = require('firebase-functions')
 const builderFunction = functions.region('asia-southeast1').https
 
+const checkWebHook = require('./routes/checkWebHook')
+exports.checkWebHook = builderFunction.onRequest(
+  checkWebHook.checkWebHook
+)
+
 const checkUserMutuality = require('./routes/checkUserMutuality')
 exports.checkUserMutuality = builderFunction.onRequest(
   checkUserMutuality.checkUserMutuality
@@ -9,10 +14,10 @@ exports.checkUserMutuality = builderFunction.onRequest(
 // const getBadWords = require('./routes/getBadWords')
 // exports.getBadWords = builderFunction.onRequest(getBadWords.getBadWords)
 
-// const sendNotification = require('./routes/sendNotification')
-// exports.sendNotification = builderFunction.onRequest(
-//   sendNotification.sendNotification
-// )
+const sendNotification = require('./routes/sendNotification')
+exports.sendNotification = builderFunction.onRequest(
+  sendNotification.sendNotification
+)
 
 const updateMessageStatus = require('./routes/updateMessageStatus')
 exports.updateMessageStatus = builderFunction.onRequest(

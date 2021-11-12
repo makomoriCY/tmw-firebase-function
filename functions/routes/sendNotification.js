@@ -7,10 +7,18 @@ const sendNotification = express()
 sendNotification.post('/', async (req, res) => {
   try {
     const {
-      messages,
-      senderProfile: sender,
-      receiverProfile: receiver
+      event,
+      data: { messages }
     } = req.body
+
+    const { userId: senderId, channelId } = messages[0]
+
+    console.log({ senderId, channelId })
+
+    if (event !== 'message.didCreate') {
+      console.log('reject event' + event)
+      return res.status(422).send('Event Incorrect')
+    }
 
     // check user profile with true backend
     const senderProfile = await getProfileFromTrue(sender)
@@ -31,6 +39,9 @@ sendNotification.post('/', async (req, res) => {
     const isReceiverBlockSender = receiverBlockList?.find(user => {
       return user === senderProfile?.userId
     })
+
+    // ถ้า status 500 ให้ retry 3 ครั้ง
+    // เขียน log track msg id
 
     if (!isSenderBlockReceiver) {
       !isReceiverBlockSender
