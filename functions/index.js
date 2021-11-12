@@ -1,11 +1,6 @@
 const functions = require('firebase-functions')
 const builderFunction = functions.region('asia-southeast1').https
 
-const checkWebhook = require('./routes/checkWebhook')
-exports.checkWebhook = builderFunction.onRequest(
-  checkWebhook.checkWebhook
-)
-
 const checkUserMutuality = require('./routes/checkUserMutuality')
 exports.checkUserMutuality = builderFunction.onRequest(
   checkUserMutuality.checkUserMutuality
