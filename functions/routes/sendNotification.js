@@ -40,6 +40,8 @@ sendNotification.post('/', async (req, res) => {
       return user === senderId
     })
 
+    // templateName.includs
+    // enumType = ['text', 'custom', 'image', 'file']
     const response = {
       templateName: 'p2p',
       tmnId: `tmn.${receiverId}`,
@@ -65,13 +67,10 @@ sendNotification.post('/', async (req, res) => {
     // ถ้า status 500 ให้ retry 3 ครั้ง
     // เขียน log track msg id
 
-    if (!isSenderBlockReceiver) {
-      !isReceiverBlockSender
-        ? res.send(pushNotification(response))
-        : res.send(dropNotification())
-    } else {
-      res.send(dropNotification())
-    }
+    if (isSenderBlockReceiver || isReceiverBlockSender)
+      return res.send(dropNotification())
+
+    return res.send(pushNotification(response))
   } catch (error) {
     console.log(`ERRORs in sendNotification function: ${error}`)
   }
@@ -82,7 +81,7 @@ function pushNotification (response) {
   return data
 }
 
-function dropNotification () { 
+function dropNotification () {
   const status = {
     status: false
   }
