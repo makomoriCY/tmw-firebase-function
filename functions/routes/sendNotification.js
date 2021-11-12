@@ -13,7 +13,7 @@ sendNotification.post('/', async (req, res) => {
       data: { messages, users }
     } = req.body
 
-    const { userId: senderId, channelId } = messages[0]
+    const { userId: senderId, channelId, messageId } = messages[0]
 
     const amount = users[0]?.metadata?.amount
 
@@ -68,24 +68,25 @@ sendNotification.post('/', async (req, res) => {
     // เขียน log track msg id
 
     if (isSenderBlockReceiver || isReceiverBlockSender)
-      return res.send(dropNotification())
+      return res.send(dropNotification(messageId))
 
-    return res.send(pushNotification(response))
+    return res.send(pushNotification({response, messageId}))
   } catch (error) {
     console.log(`ERRORs in sendNotification function: ${error}`)
   }
 })
 
-function pushNotification (response) {
+function pushNotification ({response, messageId}) {
   const data = response
+  console.log(`push notification message id : ${messageId}`)
   return data
 }
 
-function dropNotification () {
+function dropNotification (messageId) {
   const status = {
     status: false
   }
-  console.log(`Notification status : ${status.status}`)
+  console.log(`drop notification message id : ${messageId}`)
   return status
 }
 
