@@ -6,6 +6,9 @@ require('dotenv').config()
 
 const sendNotification = express()
 
+const ACCEPT_EVENT = 'message.didCreate'
+const ACCEPT_TYPE = ['text', 'custom', 'image', 'file']
+
 sendNotification.post('/', async (req, res) => {
   try {
     const {
@@ -13,13 +16,25 @@ sendNotification.post('/', async (req, res) => {
       data: { messages, users }
     } = req.body
 
-    const { userId: senderId, channelId, messageId } = messages[0]
+    const {
+      userId: senderId,
+      channelId,
+      messageId,
+      data,
+      type,
+      tags
+    } = messages[0]
 
-    const amount = users[0]?.metadata?.amount
+    const { amount, file, url, text } = data
 
-    if (event !== 'message.didCreate') {
-      console.log('reject event' + event)
+    if (event !== ACCEPT_EVENT) {
+      console.log('reject event ' + event)
       return res.status(422).send('Event Incorrect')
+    }
+
+    if (!ACCEPT_TYPE.includes(type)) {
+      console.log('reject type ' + type)
+      return res.status(422).send('Type Incorrect')
     }
 
     const userData = await getUserFromChanel(channelId)
@@ -40,43 +55,60 @@ sendNotification.post('/', async (req, res) => {
       return user === senderId
     })
 
-    // templateName.includs
-    // enumType = ['text', 'custom', 'image', 'file']
-    const response = {
-      templateName: 'p2p',
-      tmnId: `tmn.${receiverId}`,
-      properties: {
-        from: senderId.toString(),
-        amount: amount.toString()
-      }
+    let response
+    const typeSlip = ['r2p', 'p2p']
+    const templateName = tags?.filter(i => typeSlip.includes(i)).toString()
+
+    switch (type) {
+      case 'text':
+        response = responseTypeText(receiverId, senderId, text)
+        break
+      case 'custom':
+        response = responseTypeCustom(
+          templateName,
+          receiverId,
+          senderId,
+          amount
+        )
+        break
+      case 'image':
+        response = responseTypeImage(receiverId, senderId, url)
+        break
+      case 'file':
+        response = responseTypeFile(receiverId, senderId, file)
+        break
+      default:
+        response = 'default case'
+        break
     }
 
     console.log({
       senderId,
       channelId,
       amount,
+      type,
       userData,
       receiverProfile,
       senderBlockList,
       receiverBlockList,
       isSenderBlockReceiver,
       isReceiverBlockSender,
-      response
+      response,
+      messageId
     })
 
     // ถ้า status 500 ให้ retry 3 ครั้ง
-    // เขียน log track msg id
 
     if (isSenderBlockReceiver || isReceiverBlockSender)
       return res.send(dropNotification(messageId))
 
-    return res.send(pushNotification({response, messageId}))
+    return res.send(pushNotification({ response, messageId }))
   } catch (error) {
     console.log(`ERRORs in sendNotification function: ${error}`)
   }
 })
-
-function pushNotification ({response, messageId}) {
+// bulk api 10 msg or 5 sec
+function pushNotification ({ response, messageId }) {
   const data = response
   console.log(`push notification message id : ${messageId}`)
   return data
@@ -107,6 +139,56 @@ async function getUserFromChanel (channelId) {
   } catch (error) {
     console.log(`getUserFromChanel() msg : ${error}`)
   }
+}
+
+// function response set validate params
+
+function responseTypeText (receiverId, senderId, message) {
+  const response = {
+    templateName: 'text',
+    tmnId: `tmn.${receiverId}`,
+    properties: {
+      from: senderId.toString(),
+      message: message
+    }
+  }
+  return response
+}
+
+function responseTypeCustom (template, receiverId, senderId, amount) {
+  const response = {
+    templateName: template,
+    tmnId: `tmn.${receiverId}`,
+    properties: {
+      from: senderId,
+      amount: amount
+    }
+  }
+  return response
+}
+
+function responseTypeImage (receiverId, senderId, url) {
+  const response = {
+    templateName: 'image',
+    tmnId: `tmn.${receiverId}`,
+    properties: {
+      from: senderId.toString(),
+      url: url
+    }
+  }
+  return response
+}
+
+function responseTypeFile (receiverId, senderId, file) {
+  const response = {
+    templateName: 'file',
+    tmnId: `tmn.${receiverId}`,
+    properties: {
+      from: senderId.toString(),
+      file: file
+    }
+  }
+  return response
 }
 
 exports.sendNotification = builderFunction.onRequest(sendNotification)
