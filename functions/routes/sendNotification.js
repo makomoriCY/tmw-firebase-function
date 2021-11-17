@@ -55,6 +55,9 @@ sendNotification.post('/', async (req, res) => {
       return user === senderId
     })
 
+    // case custom -> p2p drop accept only r2p
+    // custom & image not require properties
+
     let response
     const typeSlip = ['r2p', 'p2p']
     const templateName = tags?.filter(i => typeSlip.includes(i)).toString()
@@ -64,12 +67,7 @@ sendNotification.post('/', async (req, res) => {
         response = responseTypeText(receiverId, senderId, text)
         break
       case 'custom':
-        response = responseTypeCustom(
-          templateName,
-          receiverId,
-          senderId,
-          amount
-        )
+        response = responseTypeCustom(templateName, receiverId)
         break
       case 'image':
         response = responseTypeImage(receiverId, senderId, url)
@@ -148,21 +146,17 @@ function responseTypeText (receiverId, senderId, message) {
     templateName: 'text',
     tmnId: `tmn.${receiverId}`,
     properties: {
-      from: senderId.toString(),
+      from: senderId,
       message: message
     }
   }
   return response
 }
 
-function responseTypeCustom (template, receiverId, senderId, amount) {
+function responseTypeCustom (template, receiverId) {
   const response = {
     templateName: template,
-    tmnId: `tmn.${receiverId}`,
-    properties: {
-      from: senderId,
-      amount: amount
-    }
+    tmnId: `tmn.${receiverId}`
   }
   return response
 }
@@ -172,7 +166,7 @@ function responseTypeImage (receiverId, senderId, url) {
     templateName: 'image',
     tmnId: `tmn.${receiverId}`,
     properties: {
-      from: senderId.toString(),
+      from: senderId,
       url: url
     }
   }
@@ -184,7 +178,7 @@ function responseTypeFile (receiverId, senderId, file) {
     templateName: 'file',
     tmnId: `tmn.${receiverId}`,
     properties: {
-      from: senderId.toString(),
+      from: senderId,
       file: file
     }
   }
