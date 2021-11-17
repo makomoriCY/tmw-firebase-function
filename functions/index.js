@@ -1,6 +1,11 @@
 const functions = require('firebase-functions')
 const builderFunction = functions.region('asia-southeast1').https
 
+const friendDetail = require('./routes/friendDetail')
+exports.friendDetail = builderFunction.onRequest(
+  friendDetail.friendDetail
+)
+
 const checkWebHook = require('./routes/checkWebHook')
 exports.checkWebHook = builderFunction.onRequest(
   checkWebHook.checkWebHook
