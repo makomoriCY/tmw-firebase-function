@@ -6,9 +6,14 @@ require('dotenv').config()
 
 const friendDetail = express()
 
+const {
+    signature,
+    isVerified
+  } = require('../verifyFuction')
+
 friendDetail.post('/', async (req, res) => {
   try {
-  
+    res.send('test')
   } catch (error) {
     console.log(`ERRORs in friendDetail function: ${error}`)
   }
