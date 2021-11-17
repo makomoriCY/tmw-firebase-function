@@ -1,13 +1,18 @@
 const crypto = require('crypto')
 const fs = require('fs')
 
+function getPublicKeySomehow () {
+  const plbKey = fs.readFileSync('./public_key.pem', 'utf8')
+  return plbKey
+}
+
 function getPrivateKeySomehow () {
-    const privKey = fs.readFileSync('./private_key.pem', 'utf8')
-    return privKey
-  }
-  
-  const publicKey = getPublicKeySomehow()
-  const privateKey = getPrivateKeySomehow()
+  const privKey = fs.readFileSync('./private_key.pem', 'utf8')
+  return privKey
+}
+
+const publicKey = getPublicKeySomehow()
+const privateKey = getPrivateKeySomehow()
 
 const verifiableData = 'this need to be verified'
 
