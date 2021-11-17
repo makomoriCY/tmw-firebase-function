@@ -34,3 +34,5 @@ const isVerified = crypto.verify(
 )
 
 console.log('signature verified: ', isVerified)
+
+module.exports = { signature, isVerified }
