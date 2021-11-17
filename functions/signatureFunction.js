@@ -1,6 +1,8 @@
 const crypto = require('crypto')
 const fs = require('fs')
 
+// use in message
+
 function getPublicKeySomehow () {
   const pubKey = fs.readFileSync('./public_key.pem', 'utf8')
   return pubKey

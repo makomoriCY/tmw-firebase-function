@@ -6,35 +6,55 @@ require('dotenv').config()
 
 const friendDetail = express()
 
-const {
-    signature,
-    isVerified
-  } = require('../verifyFuction')
+const { signature } = require('../verifyFunction')
 
 friendDetail.post('/', async (req, res) => {
   try {
-    res.send('test')
+    const { tmn_id_owner: ownerId, tmn_id_friend: friendId } = req.body
+
+    const time = new Date().getTime()
+
+    const postData = {
+      tmn_id_owner: ownerId,
+      tmn_id_friend: friendId
+    }
+
+    const verifiableData = time.toString() + JSON.stringify(postData)
+
+    const sign = signature(verifiableData)
+
+    const getDetail = getFriendDetail(ownerId, friendId, time, sign)
+    console.log({ ownerId, friendId, getDetail, sign, verifiableData })
+    return res.send(getDetail)
   } catch (error) {
     console.log(`ERRORs in friendDetail function: ${error}`)
   }
 })
 
-async function getUserFromChanel (channelId) {
-  const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjVkODRlN2IyNjEzYTI4Y2JiYWNmMTgwNmVhMzExNTI1YTEwMzAzNjM5YmNjODYxMDA1NDMwYzE0YzQ5Yzk3NTgzNDcxYjdmNDQzMzUwYzc3MjE3YTkwMjE4ZWEzM2YzODBiMjAzNGFhNWMwYTVmZmRjMWM4Yjg5MzAxYTYxZDNiOGUzMzMzYjAxZTgwYzAwNGQ1M2ZiMTZhNGJhZDEzN2JhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzNlZTM1MmUwMWMyYzdlNjAzZmM1OWI2NWU3Mjk5NjkwYWIzNzEyOTMzNjMxZTk1IiwiaWF0IjoxNjM2NjkyMzMxLCJleHAiOjE2NjgyMjgzMzF9.xP5lXEExR46HfGq9FbWq6Tn_ef0T14TTpEpJHvxhQAo'
+async function getFriendDetail (ownerId, friendId, time, sign) {
   const configAuth = {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: {
+      'x-api-key': '7a24336625754ac08850c755d2794029',
+      Timestamp: time,
+      'Content-Signature': `digest-alg=RSA-SHA; key-id=KEY:RSA:rsf.org; data=${sign}`
+    }
+  }
+
+  const postData = {
+    tmn_id_owner: ownerId,
+    tmn_id_friend: friendId
   }
 
   try {
-    const { data } = await axios.get(
-      `${process.env.PROD_URL}/v3/channels/${channelId}/users`,
+    const { data } = await axios.post(
+      `https://api-b2b.tmn-dev.com/users/friend-details`,
+      postData,
       configAuth
     )
-    const users = data.users
-    return users
+    return data
   } catch (error) {
-    console.log(`getUserFromChanel() msg : ${error}`)
+    // console.log('err msg',error)
+    console.log('err response',error?.response)
   }
 }
 
