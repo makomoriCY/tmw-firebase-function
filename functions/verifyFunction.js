@@ -14,8 +14,6 @@ function getPrivateKeySomehow () {
 const publicKey = getPublicKeySomehow()
 const privateKey = getPrivateKeySomehow()
 
-// const verifiableData = 'this need to be verified'
-
 const signature = verifiableData => {
   const vData = verifiableData
   const data = crypto.sign('sha256', Buffer.from(vData), {
@@ -23,6 +21,13 @@ const signature = verifiableData => {
     padding: crypto.constants.RSA_PKCS1_PSS_PADDING
   })
   return data.toString('base64')
+}
+
+function craeteSignature(data) {
+  var signar = crypto.createSign('sha256');
+  let private_key = fs.readFileSync('./private_key.pem').toString()
+  signar.update(data);
+  return signar.sign(private_key, 'base64');
 }
 
 // console.log(signature.toString('base64'))
@@ -39,4 +44,4 @@ const signature = verifiableData => {
 
 // console.log('signature verified: ', isVerified)
 
-module.exports = { signature }
+module.exports = { signature, craeteSignature }
