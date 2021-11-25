@@ -26,7 +26,9 @@ friendDetail.post('/', async (req, res) => {
     const sign = signature(verifiableData)
 
     const detail = getFriendDetail({ ownerId, friendId, time, sign })
+
     console.log({ ownerId, friendId, sign, verifiableData })
+
     return res.send(detail)
   } catch (error) {
     console.log(`ERRORs in friendDetail function: ${error}`)
