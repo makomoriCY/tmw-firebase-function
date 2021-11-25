@@ -23,6 +23,13 @@ const signature = verifiableData => {
   return data.toString('base64')
 }
 
+function craeteSignature(data) {
+  var signar = crypto.createSign('sha256');
+  let private_key = fs.readFileSync('./private_key.pem').toString()
+  signar.update(data);
+  return signar.sign(private_key, 'base64');
+}
+
 // console.log(signature.toString('base64'))
 
 // const isVerified = crypto.verify(
@@ -37,4 +44,4 @@ const signature = verifiableData => {
 
 // console.log('signature verified: ', isVerified)
 
-module.exports = { signature }
+module.exports = { signature, craeteSignature }

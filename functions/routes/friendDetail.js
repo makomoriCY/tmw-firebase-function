@@ -6,7 +6,7 @@ require('dotenv').config()
 
 const friendDetail = express()
 
-const { signature } = require('../verifyFunction')
+const { signature, craeteSignature } = require('../verifyFunction')
 
 friendDetail.post('/', async (req, res) => {
   try {
@@ -23,7 +23,7 @@ friendDetail.post('/', async (req, res) => {
 
     const verifiableData = time.toString() + JSON.stringify(postData)
 
-    const sign = signature(verifiableData)
+    const sign = craeteSignature(verifiableData)
 
     const detail = getFriendDetail({ ownerId, friendId, time, sign })
 
@@ -36,7 +36,6 @@ friendDetail.post('/', async (req, res) => {
 })
 
 async function getFriendDetail ({ ownerId, friendId, time, sign }) {
-  console.log('sign : ', sign)
   const config = {
     headers: {
       'x-api-key': '7a24336625754ac08850c755d2794029',
@@ -58,7 +57,7 @@ async function getFriendDetail ({ ownerId, friendId, time, sign }) {
     )
     return data
   } catch (error) {
-    console.log('getFriendDetail function :', error?.response?.data)
+    console.log('getFriendDetail function :', error?.response)
   }
 }
 
