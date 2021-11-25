@@ -14,8 +14,6 @@ function getPrivateKeySomehow () {
 const publicKey = getPublicKeySomehow()
 const privateKey = getPrivateKeySomehow()
 
-// const verifiableData = 'this need to be verified'
-
 const signature = verifiableData => {
   const vData = verifiableData
   const data = crypto.sign('sha256', Buffer.from(vData), {

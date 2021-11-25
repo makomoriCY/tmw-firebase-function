@@ -12,6 +12,8 @@ friendDetail.post('/', async (req, res) => {
   try {
     const { tmn_id_owner: ownerId, tmn_id_friend: friendId } = req.body
 
+    if (!ownerId || !friendId) return res.status(422).send('Invalid data')
+
     const time = new Date().getTime()
 
     const postData = {
@@ -23,16 +25,17 @@ friendDetail.post('/', async (req, res) => {
 
     const sign = signature(verifiableData)
 
-    const getDetail = getFriendDetail(ownerId, friendId, time, sign)
-    console.log({ ownerId, friendId, getDetail, sign, verifiableData })
-    return res.send(getDetail)
+    const detail = getFriendDetail({ ownerId, friendId, time, sign })
+    console.log({ ownerId, friendId, sign, verifiableData })
+    return res.send(detail)
   } catch (error) {
     console.log(`ERRORs in friendDetail function: ${error}`)
   }
 })
 
-async function getFriendDetail (ownerId, friendId, time, sign) {
-  const configAuth = {
+async function getFriendDetail ({ ownerId, friendId, time, sign }) {
+  console.log('sign : ', sign)
+  const config = {
     headers: {
       'x-api-key': '7a24336625754ac08850c755d2794029',
       Timestamp: time,
@@ -49,12 +52,11 @@ async function getFriendDetail (ownerId, friendId, time, sign) {
     const { data } = await axios.post(
       `https://api-b2b.tmn-dev.com/users/friend-details`,
       postData,
-      configAuth
+      config
     )
     return data
   } catch (error) {
-    // console.log('err msg',error)
-    console.log('err response',error?.response)
+    console.log('getFriendDetail function :', error?.response?.data)
   }
 }
 
