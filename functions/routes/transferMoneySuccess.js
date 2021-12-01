@@ -16,7 +16,7 @@ transferMoneySuccess.post('/', async (req, res) => {
       ownerId,
       friendId,
       currency,
-      timeStamp,
+      timestamp,
       transferId,
       referenceId,
       transferDate
@@ -40,7 +40,7 @@ transferMoneySuccess.post('/', async (req, res) => {
       ownerId,
       currency,
       friendId,
-      timeStamp,
+      timestamp,
       transferId,
       referenceId,
       transferDate
@@ -111,7 +111,7 @@ transferMoneySuccess.post('/', async (req, res) => {
         friendId: reponse.friendId,
         channel: 'truemoney',
         transferDate: reponse.transferDate,
-        timeStamp: reponse.timeStamp,
+        timestamp: reponse.timestamp,
         note: reponse.note
       },
       tags: ['payslip']
