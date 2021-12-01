@@ -7,21 +7,23 @@ require('dotenv').config()
 const transferMoneySuccess = express()
 
 transferMoneySuccess.post('/', async (req, res) => {
-  const TOKEN = req.headers.authorization.split(' ')[1]
+  const TOKEN = req.headers.authorization?.split(' ')[1]
+
+  if (!TOKEN) return res.status(401).send('Authorization info not found')
+
+  const {
+    note,
+    amount,
+    ownerId,
+    friendId,
+    currency,
+    timestamp,
+    transferId,
+    referenceId,
+    transferDate
+  } = req.body
 
   try {
-    const {
-      note,
-      amount,
-      ownerId,
-      friendId,
-      currency,
-      timestamp,
-      transferId,
-      referenceId,
-      transferDate
-    } = req.body
-
     const prepareId = [ownerId, friendId].sort().join('-')
 
     const queryChannel = await checkChannelsExist(prepareId)

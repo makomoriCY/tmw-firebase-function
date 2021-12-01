@@ -7,6 +7,9 @@ require('dotenv').config()
 const checkUserMutuality = express()
 
 checkUserMutuality.post('/', async (req, res) => {
+  const TOKEN = req.headers.authorization?.split(' ')[1]
+  if (!TOKEN) return res.status(401).send('Authorization info not found')
+
   // const ID_LENGTH = 15
   // const REGEX = new RegExp('^[0-9]+$')
   try {
@@ -58,10 +61,8 @@ checkUserMutuality.post('/', async (req, res) => {
 })
 
 async function getProfileFromAmity (ownerId, friendId) {
-  // use token user
-  const token = process.env.ADMIN_TOKEN
   const configAuth = {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${TOKEN}` }
   }
 
   try {
