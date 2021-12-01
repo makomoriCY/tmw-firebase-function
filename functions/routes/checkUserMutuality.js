@@ -7,8 +7,8 @@ require('dotenv').config()
 const checkUserMutuality = express()
 
 checkUserMutuality.post('/', async (req, res) => {
-  const ID_LENGTH = 15
-  const REGEX = new RegExp('^[0-9]+$')
+  // const ID_LENGTH = 15
+  // const REGEX = new RegExp('^[0-9]+$')
   try {
     const { owner_id: ownerId, friend_id: friendId } = req.body
 
@@ -16,11 +16,11 @@ checkUserMutuality.post('/', async (req, res) => {
 
     if (!ownerId || !friendId) return res.status(400).send('parameter require')
 
-    if (ownerId?.length !== ID_LENGTH || friendId?.length !== ID_LENGTH)
-      return res.status(400).send('ID parameter length invalid')
+    // if (ownerId?.length !== ID_LENGTH || friendId?.length !== ID_LENGTH)
+    //   return res.status(400).send('ID parameter length invalid')
 
-    if (!REGEX?.test(ownerId) || !REGEX?.test(friendId))
-      return res.status(400).send('ID parameter invalid')
+    // if (!REGEX?.test(ownerId) || !REGEX?.test(friendId))
+    //   return res.status(400).send('ID parameter invalid')
 
     const amityProfiles = await getProfileFromAmity(ownerId, friendId)
 
