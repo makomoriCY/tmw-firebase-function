@@ -7,28 +7,26 @@ require('dotenv').config()
 const checkUserMutuality = express()
 
 checkUserMutuality.post('/', async (req, res) => {
-  const ID_LENGTH = 15
-  const REGEX = new RegExp('^[0-9]+$')
+  const TOKEN = req.headers.authorization?.split(' ')[1]
+
+  if (!TOKEN) return res.status(401).send('Authorization info not found')
+
+  const { owner_id: ownerId, friend_id: friendId } = req.body
+
+  if (!ownerId || !friendId) return res.status(400).send('parameter require')
+  // const ID_LENGTH = 15
+  // const REGEX = new RegExp('^[0-9]+$')
+  // if (ownerId?.length !== ID_LENGTH || friendId?.length !== ID_LENGTH)
+  //   return res.status(400).send('ID parameter length invalid')
+
+  // if (!REGEX?.test(ownerId) || !REGEX?.test(friendId))
+  //   return res.status(400).send('ID parameter invalid')
   try {
-    const { owner_id: ownerId, friend_id: friendId } = req.body
-
-    console.log({ ownerId, friendId })
-
-    if (!ownerId || !friendId) return res.status(400).send('parameter require')
-
-    if (ownerId?.length !== ID_LENGTH || friendId?.length !== ID_LENGTH)
-      return res.status(400).send('ID parameter length invalid')
-
-    if (!REGEX?.test(ownerId) || !REGEX?.test(friendId))
-      return res.status(400).send('ID parameter invalid')
-
     const amityProfiles = await getProfileFromAmity(ownerId, friendId)
 
     if (!amityProfiles) return res.status(404).send('User not found')
 
     const trueProfiles = await getProfileFromTrue(ownerId, friendId)
-
-    console.log({ amityProfiles, trueProfiles })
 
     const friendDetails = {
       owner: {
@@ -47,60 +45,54 @@ checkUserMutuality.post('/', async (req, res) => {
       }
     }
 
-    console.log({
-      friendDetails
-    })
-
     res.send(friendDetails)
   } catch (error) {
-    console.log(`ERRORs in checkUserMutuality function: ${error}`)
+    console.log(`check user mutuality() err msg : ${error}`)
+  }
+
+  async function getProfileFromAmity (ownerId, friendId) {
+    const configAuth = {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    }
+
+    try {
+      const ownerProfile = await axios.get(
+        `${process.env.PROD_URL}/v3/users/${ownerId}`,
+        configAuth
+      )
+
+      const friendProfile = await axios.get(
+        `${process.env.PROD_URL}/v3/users/${friendId}`,
+        configAuth
+      )
+
+      const ownerBlockList = ownerProfile.data.metadata?.blockList
+      const friendBlockList = friendProfile.data.metadata?.blockList
+
+      const isOwnerGetBlock =
+        friendBlockList?.some(user => user === ownerId) || false
+
+      const isFriendGetBlock =
+        ownerBlockList?.some(user => user === friendId) || false
+
+      const response = {
+        owner: {
+          id: ownerId,
+          displayName: ownerProfile.data.users[0].displayName,
+          isOwnerGetBlock
+        },
+        friend: {
+          id: friendId,
+          displayName: friendProfile.data.users[0].displayName,
+          isFriendGetBlock
+        }
+      }
+      return response
+    } catch (error) {
+      console.log(`get amity profile() err msg ${error}`)
+    }
   }
 })
-
-async function getProfileFromAmity (ownerId, friendId) {
-  // use token user
-  const token = process.env.ADMIN_TOKEN
-  const configAuth = {
-    headers: { Authorization: `Bearer ${token}` }
-  }
-
-  try {
-    const ownerProfile = await axios.get(
-      `${process.env.PROD_URL}/v3/users/${ownerId}`,
-      configAuth
-    )
-
-    const friendProfile = await axios.get(
-      `${process.env.PROD_URL}/v3/users/${friendId}`,
-      configAuth
-    )
-
-    const ownerBlockList = ownerProfile.data.metadata?.blockList
-    const friendBlockList = friendProfile.data.metadata?.blockList
-
-    const isOwnerGetBlock =
-      friendBlockList?.some(user => user === ownerId) || false
-
-    const isFriendGetBlock =
-      ownerBlockList?.some(user => user === friendId) || false
-
-    const response = {
-      owner: {
-        id: ownerId,
-        displayName: ownerProfile.data.users[0].displayName,
-        isOwnerGetBlock
-      },
-      friend: {
-        id: friendId,
-        displayName: friendProfile.data.users[0].displayName,
-        isFriendGetBlock
-      }
-    }
-    return response
-  } catch (error) {
-    console.log(`ERRORs in getAmityProfile ${error}`)
-  }
-}
 
 async function getProfileFromTrue (ownerId, friendId) {
   const profile = {
