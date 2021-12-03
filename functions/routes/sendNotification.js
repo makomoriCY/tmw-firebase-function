@@ -6,111 +6,142 @@ require('dotenv').config()
 
 const sendNotification = express()
 
+const { craeteSignature } = require('../verifyFunction')
+
 const ACCEPT_EVENT = 'message.didCreate'
 const ACCEPT_TYPE = ['text', 'custom', 'image', 'file']
+const DROP_OFF_TAGS = ['payslip', 'blockee']
+const TYPE_SLIP = ['request']
+const VALIDATE_FAIL = 'VALIDATE_FAIL'
 
 sendNotification.post('/', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1]
+
+  if (!token) return res.status(401).send('Authorization info not found')
+
+  const {
+    event,
+    data: { messages, users }
+  } = req.body
+
+  const {
+    userId: senderId,
+    channelId,
+    messageId,
+    data,
+    type,
+    tags
+  } = messages[0]
+
+  const { amount, file, url, text } = data
+
+  if (event !== ACCEPT_EVENT) {
+    console.log('reject event ' + event)
+    return res.status(422).send('Event Incorrect')
+  }
+
+  if (!ACCEPT_TYPE.includes(type)) {
+    console.log('reject type ' + type)
+    return res.status(422).send('Type Incorrect')
+  }
+
+  if (tags.some(i => DROP_OFF_TAGS.includes(i))) {
+    return res.send(dropNotification(messageId))
+  }
+
   try {
-    const {
-      event,
-      data: { messages, users }
-    } = req.body
-
-    const {
-      userId: senderId,
-      channelId,
-      messageId,
-      data,
-      type,
-      tags
-    } = messages[0]
-
-    const { amount, file, url, text } = data
-
-    if (event !== ACCEPT_EVENT) {
-      console.log('reject event ' + event)
-      return res.status(422).send('Event Incorrect')
-    }
-
-    if (!ACCEPT_TYPE.includes(type)) {
-      console.log('reject type ' + type)
-      return res.status(422).send('Type Incorrect')
-    }
-
     const userData = await getUserFromChanel(channelId)
 
     const receiverProfile = userData?.filter(user => user.userId !== senderId)
 
     const receiverId = receiverProfile[0].userId
 
-    const senderBlockList = users[0]?.metadata?.blockList
+    let payload
 
-    const receiverBlockList = receiverProfile[0]?.metadata?.blockList
-
-    const isSenderBlockReceiver = senderBlockList?.find(user => {
-      return user === receiverId
-    })
-
-    const isReceiverBlockSender = receiverBlockList?.find(user => {
-      return user === senderId
-    })
-
-    // case custom -> p2p drop accept only r2p
-    // custom & image not require properties
-
-    let response
-    const typeSlip = ['r2p', 'p2p']
-    const templateName = tags?.filter(i => typeSlip.includes(i)).toString()
-
+    const templateName = tags?.filter(i => TYPE_SLIP.includes(i)).toString()
     switch (type) {
       case 'text':
-        response = responseTypeText(receiverId, senderId, text)
+        payload = payloadTypeText(receiverId, senderId, text)
         break
       case 'custom':
-        response = responseTypeCustom(templateName, receiverId)
+        if (!templateName) return res.status(422).send('Type slip Incorrect')
+        payload = payloadTypeCustom(templateName, receiverId)
         break
       case 'image':
-        response = responseTypeImage(receiverId, senderId, url)
+        payload = payloadTypeImage(receiverId, senderId, url)
         break
       case 'file':
-        response = responseTypeFile(receiverId, senderId, file)
+        payload = payloadTypeFile(receiverId, senderId, file)
         break
       default:
-        response = 'default case'
+        payload = VALIDATE_FAIL
         break
     }
 
-    console.log({
-      senderId,
-      channelId,
-      amount,
-      type,
-      userData,
-      receiverProfile,
-      senderBlockList,
-      receiverBlockList,
-      isSenderBlockReceiver,
-      isReceiverBlockSender,
-      response,
-      messageId
-    })
+    console.log({ userData, receiverId, payload })
+    if (payload === VALIDATE_FAIL)
+      return res.status(422).send('Parameter require')
 
-    // ถ้า status 500 ให้ retry 3 ครั้ง
+    // const time = new Date().getTime()
 
-    if (isSenderBlockReceiver || isReceiverBlockSender)
-      return res.send(dropNotification(messageId))
+    // const postData = payload
 
-    return res.send(pushNotification({ response, messageId }))
+    // const verifiableData = time.toString() + JSON.stringify(postData)
+
+    // const sign = craeteSignature(verifiableData)
+
+    // const pushNoti = await pushNotification(payload, time, sign)
+
+    // if (!pushNoti) return res.status(500).send('Can not push notification')
+
+    return res.send(`Push notification message id : ${messageId}`)
   } catch (error) {
-    console.log(`ERRORs in sendNotification function: ${error}`)
+    console.log(`send notification() err msg : ${error}`)
+  }
+
+  async function getUserFromChanel (channelId) {
+    const configAuth = {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+
+    try {
+      const { data } = await axios.get(
+        `${process.env.PROD_URL}/v3/channels/${channelId}/users`,
+        configAuth
+      )
+      const users = data.users
+      return users
+    } catch (error) {
+      console.log(`getUserFromChanel() msg : ${error}`)
+    }
+  }
+
+  // bulk api 10 msg or 5 sec
+  async function pushNotification (payload, time, sign) {
+    const configAuth = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'x-api-key': '7a24336625754ac08850c755d2794029',
+        Timestamp: time,
+        'Content-Signature': `digest-alg=RSA-SHA; key-id=KEY:RSA:rsf.org; data=${sign}`
+      }
+    }
+
+    const postData = payload
+
+    try {
+      const { data } = await axios.post(
+        'https://api-b2b.tmn-dev.com/notification/send',
+        postData,
+        configAuth
+      )
+      console.log('sss', data)
+      return data
+    } catch (error) {
+      console.log(`push notification() err msg : ${error}`)
+    }
   }
 })
-// bulk api 10 msg or 5 sec
-function pushNotification ({ response, messageId }) {
-  const data = response
-  console.log(`push notification message id : ${messageId}`)
-  return data
-}
 
 function dropNotification (messageId) {
   const status = {
@@ -120,29 +151,11 @@ function dropNotification (messageId) {
   return status
 }
 
-async function getUserFromChanel (channelId) {
-  const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmRmZWFhMGY2Yzk5YTUyNjE0NTNkMjQ3MDc1NjA0ODJjMjVkODRlN2IyNjEzYTI4Y2JiYWNmMTgwNmVhMzExNTI1YTEwMzAzNjM5YmNjODYxMDA1NDMwYzE0YzQ5Yzk3NTgzNDcxYjdmNDQzMzUwYzc3MjE3YTkwMjE4ZWEzM2YzODBiMjAzNGFhNWMwYTVmZmRjMWM4Yjg5MzAxYTYxZDNiOGUzMzMzYjAxZTgwYzAwNGQ1M2ZiMTZhNGJhZDEzN2JhMjJkZTAxMWE5MDE3ZjhhYjFlMTZmNTYyM2QwNzNlZTM1MmUwMWMyYzdlNjAzZmM1OWI2NWU3Mjk5NjkwYWIzNzEyOTMzNjMxZTk1IiwiaWF0IjoxNjM2NjkyMzMxLCJleHAiOjE2NjgyMjgzMzF9.xP5lXEExR46HfGq9FbWq6Tn_ef0T14TTpEpJHvxhQAo'
-  const configAuth = {
-    headers: { Authorization: `Bearer ${token}` }
+function payloadTypeText (receiverId, senderId, message) {
+  if (!(receiverId && senderId && message)) {
+    return VALIDATE_FAIL
   }
-
-  try {
-    const { data } = await axios.get(
-      `${process.env.PROD_URL}/v3/channels/${channelId}/users`,
-      configAuth
-    )
-    const users = data.users
-    return users
-  } catch (error) {
-    console.log(`getUserFromChanel() msg : ${error}`)
-  }
-}
-
-// function response set validate params
-
-function responseTypeText (receiverId, senderId, message) {
-  const response = {
+  const payload = {
     templateName: 'text',
     tmnId: `tmn.${receiverId}`,
     properties: {
@@ -150,19 +163,25 @@ function responseTypeText (receiverId, senderId, message) {
       message: message
     }
   }
-  return response
+  return payload
 }
 
-function responseTypeCustom (template, receiverId) {
-  const response = {
+function payloadTypeCustom (template, receiverId) {
+  if (!(template && receiverId)) {
+    return VALIDATE_FAIL
+  }
+  const payload = {
     templateName: template,
     tmnId: `tmn.${receiverId}`
   }
-  return response
+  return payload
 }
 
-function responseTypeImage (receiverId, senderId, url) {
-  const response = {
+function payloadTypeImage (receiverId, senderId, url) {
+  if (!(receiverId && senderId && url)) {
+    return VALIDATE_FAIL
+  }
+  const payload = {
     templateName: 'image',
     tmnId: `tmn.${receiverId}`,
     properties: {
@@ -170,11 +189,14 @@ function responseTypeImage (receiverId, senderId, url) {
       url: url
     }
   }
-  return response
+  return payload
 }
 
-function responseTypeFile (receiverId, senderId, file) {
-  const response = {
+function payloadTypeFile (receiverId, senderId, file) {
+  if (!(receiverId && senderId && file)) {
+    return VALIDATE_FAIL
+  }
+  const payload = {
     templateName: 'file',
     tmnId: `tmn.${receiverId}`,
     properties: {
@@ -182,7 +204,7 @@ function responseTypeFile (receiverId, senderId, file) {
       file: file
     }
   }
-  return response
+  return payload
 }
 
 exports.sendNotification = builderFunction.onRequest(sendNotification)
